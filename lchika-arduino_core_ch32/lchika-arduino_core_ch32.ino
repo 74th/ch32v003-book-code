@@ -1,4 +1,4 @@
-#define LED PC1
+#define LED PC0
 
 void setup() {
   pinMode(LED, OUTPUT);
