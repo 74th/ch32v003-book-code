@@ -32,14 +32,28 @@ void TIM1_INT_Init(uint16_t arr, uint16_t psc)
     TIM_TimeBaseInitStructure.TIM_Period = arr;
     // リセットされて、さらにイベント発生させる周期
     // 50 をセットすれば、上と併せて、1Hz(1s) でイベントが発生する
-    TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 10;
+    TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 5 - 1;
 
     TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
     TIM_TimeBaseInit(TIM1, &TIM_TimeBaseInitStructure);
 
+    printf("TIM1->CTLR1: %x\r\n", TIM1->CTLR1);
+    printf("TIM1->ATRLR: %x\r\n", TIM1->ATRLR);
+    printf("TIM1->PSC: %x\r\n", TIM1->PSC);
+    printf("TIM1->RPTCR: %x\r\n", TIM1->RPTCR);
+    printf("TIM1->SWEVGR: %x\r\n", TIM1->SWEVGR);
+    // TIM1->CTLR1: 0
+    // TIM1->ATRLR: 63
+    // TIM1->PSC: bb7f
+    // TIM1->RPTCR: a
+    // TIM1->SWEVGR: 0
+
     // 割り込みフラグのクリア
     TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
+
+    printf("TIM1->INTFR: %x\r\n", TIM1->INTFR);
+    // TIM1->INTFR: 0
 
     // 割り込みの設定
     NVIC_InitStructure.NVIC_IRQChannel = TIM1_UP_IRQn;
@@ -48,7 +62,14 @@ void TIM1_INT_Init(uint16_t arr, uint16_t psc)
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 
+    printf("NVIC->IPRIOR[TIM1_UP_IRQn]: %x\r\n", NVIC->IPRIOR[(uint32_t)(TIM1_UP_IRQn)]);
+    printf("NVIC->IENR[TIM1_UP_IRQn]:%x\r\n", NVIC->IENR[(uint32_t)(TIM1_UP_IRQn)]);
+    // NVIC->IPRIOR[TIM1_UP_IRQn]: 40
+    // NVIC->IENR[TIM1_UP_IRQn]:0
+
     TIM_ITConfig(TIM1, TIM_IT_Update, ENABLE);
+    printf("TIM1->DMAINTENR: %x\r\n", TIM1->DMAINTENR);
+    // TIM1->DMAINTENR: 1
 }
 
 void TIM2_INT_Init(uint16_t arr, uint16_t psc)
@@ -67,11 +88,9 @@ void TIM2_INT_Init(uint16_t arr, uint16_t psc)
     TIM_TimeBaseInitStructure.TIM_Prescaler = psc;
 
     // カウンターをリセットする周期
-    // 100-1 をセットすれば、上と併せて、10Hz(100ms) でリセットされる
+    // 1000-1 をセットすれば、上と併せて、1Hz(1s) でリセットされる
     TIM_TimeBaseInitStructure.TIM_Period = arr;
-    // リセットされて、さらにイベント発生させる周期
-    // 50 をセットすれば、上と併せて、1Hz(1s) でイベントが発生する
-    TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 10;
+    // TIM2 には RepetitionCounter はない
 
     TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
@@ -81,7 +100,7 @@ void TIM2_INT_Init(uint16_t arr, uint16_t psc)
     TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
 
     // 割り込みの設定
-    NVIC_InitStructure.NVIC_IRQChannel = TIM1_UP_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
@@ -108,7 +127,7 @@ void TIM2_IRQHandler(void)
 {
     if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
     {
-        printf("1sec event\r\n");
+        printf("500ms event\r\n");
     }
     TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
 
@@ -117,7 +136,7 @@ void TIM2_IRQHandler(void)
 }
 
 // 利用するタイマー
-#define USE_TIM1 0
+#define USE_TIM1 1
 
 int main(void)
 {
@@ -140,11 +159,11 @@ int main(void)
 
     printf("start\r\n");
 
-#ifdef USE_TIM1 == 1
+#if USE_TIM1 == 1
     TIM1_INT_Init(100 - 1, 48000 - 1);
     TIM_Cmd(TIM1, ENABLE); // 1S
 #else
-    TIM2_INT_Init(100 - 1, 48000 - 1);
+    TIM2_INT_Init(500 - 1, 48000 - 1);
     TIM_Cmd(TIM2, ENABLE); // 1S
 #endif
 
