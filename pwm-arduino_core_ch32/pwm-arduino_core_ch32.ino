@@ -6,18 +6,20 @@ void setup() {
   pinMode(LED2, OUTPUT);
 }
 
+// analogWrite(Pin, 0-4095);
+
 void loop() {
   printf("up\r\n");
-  for(int i=0;i<16;i++){
-    analogWrite(LED1, 256*i-1);
-    analogWrite(LED2, 256*(15-i)-1);
-    delay(62);
+  for(int i=1;i<=32;i++){
+    analogWrite(LED1, 128*i-1);
+    analogWrite(LED2, 128*(33-i)-1);
+    delay(31);
   }
 
   printf("down\r\n");
-  for(int i=0;i<16;i++){
-    analogWrite(LED1, 256*(15-i)-1);
-    analogWrite(LED2, 256*i-1);
-    delay(62);
+  for(int i=1;i<=32;i++){
+    analogWrite(LED1, 128*(33-i)-1);
+    analogWrite(LED2, 128*i-1);
+    delay(31);
   }
 }
