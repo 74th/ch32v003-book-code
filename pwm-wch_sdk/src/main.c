@@ -29,7 +29,7 @@ void TIM1_PWMOut_Init()
 
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-    TIM_OCInitStructure.TIM_Pulse = 0;
+    TIM_OCInitStructure.TIM_Pulse = 128;
     TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
     TIM_OC1Init(TIM1, &TIM_OCInitStructure);
 
@@ -56,6 +56,7 @@ int main(void)
     while (1)
     {
         Delay_Ms(100);
+        printf("up\r\n");
         for (int i = 1; i <= 32; i++)
         {
             TIM_SetCompare1(TIM1, 8 * i - 1);
