@@ -15,8 +15,12 @@ int main(void)
     SystemCoreClockUpdate();
     Delay_Init();
 
+    // SDI printf の有効化
     // ビルドフラグ SDI_PRINT=1 が必要
+    // wlink sdi-print enable を実行し、USBシリアルをリスンする
     SDI_Printf_Enable();
+
+    // USART1 printf の有効化
     // USART_Printf_Init(115200);
 
     printf("init\r\n");
