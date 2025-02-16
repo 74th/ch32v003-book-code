@@ -89,7 +89,7 @@ int main()
 
 		for (int i = 1; i <= 32; i++)
 		{
-			TIM1->CH1CVR = 8 * 9 - 1;	 // Chl 1
+			TIM1->CH1CVR = 8 * i - 1;	 // Chl 1
 			TIM1->CH4CVR = 8 * (33 - i); // Chl 4
 			Delay_Us(1000000 / 32);
 		}
@@ -99,7 +99,7 @@ int main()
 		for (int i = 1; i <= 32; i++)
 		{
 			TIM1->CH1CVR = 8 * (33 - i); // Chl 1
-			TIM1->CH4CVR = 8 * 9 - 1;	 // Chl 4
+			TIM1->CH4CVR = 8 * i - 1;	 // Chl 4
 			Delay_Us(1000000 / 32);
 		}
 	}
