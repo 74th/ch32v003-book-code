@@ -2,6 +2,8 @@
 #define LED2 PD4
 
 void setup() {
+  USART_Printf_Init(115200);
+
   pinMode(LED1, OUTPUT);
   pinMode(LED2, OUTPUT);
 }
