@@ -10,8 +10,6 @@ PlatformIOで環境を構築できるが、Linux aarch64環境では動作しな
 
 https://github.com/Community-PIO-CH32V/platform-ch32v
 
-- analogWrite() はデジタルにしか動かない
-
 ### ch32v003fun
 
 https://github.com/cnlohr/ch32v003fun
