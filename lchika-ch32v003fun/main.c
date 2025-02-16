@@ -12,6 +12,8 @@ int main()
 {
 	SystemInit();
 
+	printf("init\r\n");
+
 	// GPIO有効化
 	GPIO_port_enable(GPIO_port_C);
 	GPIO_port_enable(GPIO_port_A);
@@ -21,23 +23,25 @@ int main()
 	// PA1 ピンを入力に設定
 	GPIO_pinMode(BUTTON_PIN, GPIO_pinMode_I_pullUp, GPIO_Speed_10MHz);
 
-	count = 0;
+	printf("start\r\n");
+
+	int count = 0;
 
 	while (1)
 	{
+		printf("loop %d\r\n", count++);
+
 		// PA1 のボタンが押されていれば点灯しない
 		uint8_t btn = GPIO_digitalRead(BUTTON_PIN);
 		if (btn == low)
 		{
+			Delay_Ms(1000);
 			continue;
 		}
 
 		GPIO_digitalWrite(LED_PIN, high);
-		GPIOC->BSHR = 1 << 1;
-		printf("H %lu\n", count++);
 		Delay_Ms(500);
 		GPIO_digitalWrite(LED_PIN, low);
-		printf("L %lu\n", count++);
 		Delay_Ms(500);
 	}
 }

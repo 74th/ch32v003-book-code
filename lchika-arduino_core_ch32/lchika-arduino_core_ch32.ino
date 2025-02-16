@@ -3,23 +3,31 @@
 
 void setup()
 {
+  Serial.begin(115200);
   // 動作を確認できなかった
-  USART_Printf_Init(115200);
+  // USART_Printf_Init(115200);
 
-  printf("init\r\n");
+  Serial.println("init");
+  // printf("init\r\n");
 
   pinMode(LED, OUTPUT);
   pinMode(BUTTON, INPUT_PULLUP);
 
-  printf("start\r\n");
+  Serial.println("start");
+  // printf("start\r\n");
 }
+
+int count = 0;
 
 void loop()
 {
-  printf("loop\r\n");
+  Serial.print("loop ");
+  Serial.println(count++);
+  // printf("loop %d\r\n", count);
   
   bool btn = digitalRead(BUTTON);
   if(!btn){
+    delay(1000);
     return;
   }
 
