@@ -50,11 +50,11 @@ void t1pwm_init(void)
 	TIM1->CCER |= TIM_CC4E | TIM_CC4P;
 
 	// CH1 Mode is output, PWM1 (CC1S = 00, OC1M = 110)
-	// CH1をアウトプット
+	// CH1をアウトプットで有効化
 	TIM1->CHCTLR1 |= TIM_OC1M_2 | TIM_OC1M_1;
 
 	// CH2 Mode is output, PWM1 (CC1S = 00, OC1M = 110)
-	// CH2
+	// CH2をアウトプットで有効化
 	TIM1->CHCTLR2 |= TIM_OC4M_2 | TIM_OC4M_1;
 
 	// Set the Capture Compare Register value to 50% initially
@@ -68,57 +68,6 @@ void t1pwm_init(void)
 	TIM1->CTLR1 |= TIM_CEN;
 }
 
-/*
- * set timer channel PW
- */
-void t1pwm_setpw(uint8_t chl, uint16_t width)
-{
-	switch (chl & 3)
-	{
-	case 0:
-		TIM1->CH1CVR = width;
-		break;
-	case 1:
-		TIM1->CH2CVR = width;
-		break;
-	case 2:
-		TIM1->CH3CVR = width;
-		break;
-	case 3:
-		TIM1->CH4CVR = width;
-		break;
-	}
-}
-
-/*
- * force output (used for testing / debug)
- */
-void t1pwm_force(uint8_t chl, uint8_t val)
-{
-	uint16_t temp;
-
-	chl &= 3;
-
-	if (chl < 2)
-	{
-		temp = TIM1->CHCTLR1;
-		temp &= ~(TIM_OC1M << (8 * chl));
-		temp |= (TIM_OC1M_2 | (val ? TIM_OC1M_0 : 0)) << (8 * chl);
-		TIM1->CHCTLR1 = temp;
-	}
-	else
-	{
-		chl &= 1;
-		temp = TIM1->CHCTLR2;
-		temp &= ~(TIM_OC1M << (8 * chl));
-		temp |= (TIM_OC1M_2 | (val ? TIM_OC1M_0 : 0)) << (8 * chl);
-		TIM1->CHCTLR2 = temp;
-	}
-}
-
-/*
- * entry
- */
 int main()
 {
 	uint32_t count = 0;
@@ -126,20 +75,32 @@ int main()
 	SystemInit();
 	Delay_Ms(100);
 
-	printf("\r\r\n\ntim1_pwm example\n\r");
+	printf("init\n\r");
 
-	// init TIM1 for PWM
-	printf("initializing tim1...");
 	t1pwm_init();
-	printf("done.\n\r");
 
-	printf("looping...\n\r");
+	printf("start\n\r");
+
 	while (1)
 	{
-		t1pwm_setpw(0, count);				 // Chl 1
-		t1pwm_setpw(3, (count + 128) & 255); // Chl 4
-		count++;
-		count &= 255;
-		Delay_Ms(5);
+		Delay_Ms(100);
+
+		printf("up\r\n");
+
+		for (int i = 1; i <= 32; i++)
+		{
+			TIM1->CH1CVR = 8 * 9 - 1;	 // Chl 1
+			TIM1->CH4CVR = 8 * (33 - i); // Chl 4
+			Delay_Us(1000000 / 32);
+		}
+
+		printf("down\r\n");
+
+		for (int i = 1; i <= 32; i++)
+		{
+			TIM1->CH1CVR = 8 * (33 - i); // Chl 1
+			TIM1->CH4CVR = 8 * 9 - 1;	 // Chl 4
+			Delay_Us(1000000 / 32);
+		}
 	}
 }
