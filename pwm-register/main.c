@@ -38,7 +38,7 @@ void t1pwm_init(void)
 	TIM1->ATRLR = 255;
 
 	// Reload immediately
-	// 繰り替えす
+	// 繰り返す
 	TIM1->SWEVGR |= TIM_UG;
 
 	// Enable CH1N output, positive pol

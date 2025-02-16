@@ -16,17 +16,20 @@ void TIM1_PWMOut_Init()
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD | RCC_APB2Periph_TIM1, ENABLE);
 
+    // PD2をAF出力設定
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
     GPIO_Init(GPIOD, &GPIO_InitStructure);
 
+    // Timer1を256周期で有効か
     TIM_TimeBaseInitStructure.TIM_Period = 255;
     TIM_TimeBaseInitStructure.TIM_Prescaler = 1;
     TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
     TIM_TimeBaseInit(TIM1, &TIM_TimeBaseInitStructure);
 
+    // Timer1 CH1をPWMで有効化
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
     TIM_OCInitStructure.TIM_Pulse = 0;
@@ -49,7 +52,7 @@ int main(void)
 
     printf("init\r\n");
 
-    TIM1_PWMOut_Init(100, 48000 - 1, 50);
+    TIM1_PWMOut_Init();
 
     printf("start\r\n");
 
