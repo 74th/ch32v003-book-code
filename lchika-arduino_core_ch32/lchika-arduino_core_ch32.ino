@@ -19,7 +19,6 @@ void loop()
   printf("loop\r\n");
   
   bool btn = digitalRead(BUTTON);
-
   if(!btn){
     return;
   }
