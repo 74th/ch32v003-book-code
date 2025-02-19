@@ -1,6 +1,6 @@
 ## testing code - テストコード
 
-- [x] Simple LED Blink - 単純なLチカ
+- [x] Simple LED Blink and button - 単純なLチカとボタン
   - [x] Arduino Core CH32
   - [x] Arduino wch32v003
   - [x] WCH SDK
@@ -29,12 +29,24 @@
   - [ ] Arduino wch32v003
   - [ ] WCH SDK
   - [ ] register
+- [ ] UART
+  - [ ] Arduino Core CH32
+  - [ ] Arduino wch32v003
+  - [ ] WCH SDK
+  - [ ] register
 - [ ] Sleep Mode, Standby Mode - スリープモード、スタンバイモード
   - [ ] LED Blink with Sleep Mode during Delay - Delay中はSleep Modeに落とすLチカ
   - [ ] LED Blink with Standby Mode during Delay - Delay中はStanby Modeに落とすLチカ
   - [ ] Resume from Sleep Mode by pressing a button - ボタンを押すとSleep Modeから復帰する
   - [ ] Resume from Standby Mode by pressing a button - ボタンを押すとStandby Modeから復帰する
   - [ ] Standby Mode operates during PWM - PWM中はStandbyが動作すること
+- [ ] DMA
+  - [ ] DMA blink LED - DMAでLチカ
+  - [ ] DMA SPI
+- [ ] NeoPixel
+  - [ ] CPU nop
+  - [ ] DMA SPI
+- [ ]
 
 ## ライブラリ・環境
 
