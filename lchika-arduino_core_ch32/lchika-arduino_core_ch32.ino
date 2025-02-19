@@ -4,7 +4,8 @@
 void setup()
 {
   Serial.begin(115200);
-  // 動作を確認できなかった
+
+  // not working - 動作を確認できなかった
   // USART_Printf_Init(115200);
 
   Serial.println("init");
@@ -24,9 +25,10 @@ void loop()
   Serial.print("loop ");
   Serial.println(count++);
   // printf("loop %d\r\n", count);
-  
+
   bool btn = digitalRead(BUTTON);
-  if(!btn){
+  if (!btn)
+  {
     delay(1000);
     return;
   }
