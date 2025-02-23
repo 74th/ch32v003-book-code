@@ -92,7 +92,7 @@ int main(void)
     GPIO_Init(GPIOC, &GPIO_InitStructure);
 
     // I2C1 Init
-    I2C_InitTSturcture.I2C_ClockSpeed = 400000;
+    I2C_InitTSturcture.I2C_ClockSpeed = 100000;
     I2C_InitTSturcture.I2C_Mode = I2C_Mode_I2C;
     I2C_InitTSturcture.I2C_DutyCycle = I2C_DutyCycle_2;
     I2C_InitTSturcture.I2C_OwnAddress1 = SHT31_I2C_ADDR;
