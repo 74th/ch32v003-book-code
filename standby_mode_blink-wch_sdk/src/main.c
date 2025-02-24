@@ -4,7 +4,7 @@
 #define BLINKY_GPIO_PORT GPIOC
 #define BLINKY_GPIO_PIN GPIO_Pin_1
 
-#define ENABLE_UART_PRINT 0
+#define ENABLE_UART_PRINT 1
 
 void NMI_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void HardFault_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
