@@ -20,7 +20,7 @@
   - [ ] WCH SDK
   - [ ] register
 - [ ] I2C Slave - I2Cスレーブ
-  - [ ] Arduino Core CH32
+  - [ ] Arduino Core CH32cp
   - [ ] Arduino wch32v003
   - [ ] WCH SDK
   - [ ] register
