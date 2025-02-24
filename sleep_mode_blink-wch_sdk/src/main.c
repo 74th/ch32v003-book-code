@@ -5,6 +5,10 @@
 #define BLINKY_GPIO_PIN GPIO_Pin_1
 #define ENABLE_UART_PRINT 0
 
+#define MODE_USE_SLEEP 1
+#define MODE_NOUSE_SLEEP 0
+#define MODE MODE_USE_SLEEP
+
 void NMI_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void HardFault_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void TIM1_UP_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
@@ -33,7 +37,7 @@ void TIM1_INT_Init(uint16_t arr, uint16_t psc)
     TIM_TimeBaseInitStructure.TIM_Period = arr;
     // リセットされて、さらにイベント発生させる周期
     // 50 をセットすれば、上と併せて、1Hz(1s) でイベントが発生する
-    TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 5 - 1;
+    TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 20 - 1;
 
     TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
@@ -99,7 +103,16 @@ void TIM1_UP_IRQHandler(void)
         printf("tim\r\n");
     }
 #endif
+
+#if MODE == MODE_USE_SLEEP
     // メインスレッド側で処理するので何もしない
+#endif
+
+#if MODE == MODE_NOUSE_SLEEP
+    // タイマーでLチカ
+    GPIO_WriteBit(BLINKY_GPIO_PORT, BLINKY_GPIO_PIN, ledState);
+    ledState ^= 1;
+#endif
 
     TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
 }
@@ -140,6 +153,9 @@ int main(void)
     TIM_Cmd(TIM1, ENABLE); // 1S
     while (1)
     {
+
+#if MODE == MODE_USE_SLEEP
+
 #if ENABLE_UART_PRINT == 1
         printf("awake\r\n");
 #endif
@@ -148,6 +164,11 @@ int main(void)
 
         // 割り込み待ち命令を実行すると、sleepに入る
         __WFI();
+#endif
+
+#if MODE == MODE_NOUSE_SLEEP
+        // 何もしない
+#endif
     }
 }
 
