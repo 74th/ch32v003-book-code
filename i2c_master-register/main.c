@@ -67,8 +67,8 @@ void init_i2c_master()
 #define I2C_EVENT_MASTER_BYTE_RECEIVED ((uint32_t)0x00030040)			  /* TRA, SB, ADDR flags */
 
 /*
- * check for 32-bit event codes
- * https://github.com/cnlohr/ch32v003fun/blob/ee60fd756aa015be799e430d230a8f33266421de/examples/i2c_oled/i2c.h#L122
+ * イベントコード
+ * https://github.com/cnlohr/ch32v003fun/blob/8f7517e9acf2a3de650fc3cdd125ed1a1d01f9a2/extralibs/ssd1306_i2c.h#L125
  */
 uint8_t i2c_chk_evt(uint32_t event_mask)
 {
@@ -79,13 +79,13 @@ uint8_t i2c_chk_evt(uint32_t event_mask)
 
 /*
  * low-level packet send for blocking polled operation via i2c
- * https://github.com/cnlohr/ch32v003fun/blob/ee60fd756aa015be799e430d230a8f33266421de/examples/i2c_oled/i2c.h#L242
+ * https://github.com/cnlohr/ch32v003fun/blob/8f7517e9acf2a3de650fc3cdd125ed1a1d01f9a2/extralibs/ssd1306_i2c.h#L245
  */
 uint8_t i2c_send(uint8_t addr, uint8_t *data, uint8_t sz)
 {
 	int32_t timeout;
 
-	I2C1->CTLR1 |= I2C_CTLR1_ACK;
+	// I2C1->CTLR1 |= I2C_CTLR1_ACK;
 
 	// wait for not busy
 	timeout = TIMEOUT_MAX;
@@ -129,7 +129,6 @@ uint8_t i2c_send(uint8_t addr, uint8_t *data, uint8_t sz)
 	// send data one byte at a time
 	while (sz--)
 	{
-		printf("i2c send: [%2d] 0x%02x\r\n", sz, *data);
 		// wait for TX Empty
 		timeout = TIMEOUT_MAX;
 		while (!(I2C1->STAR1 & I2C_STAR1_TXE) && (timeout--))
@@ -236,17 +235,6 @@ int i2c_receive(uint8_t addr, uint8_t *buf, uint8_t sz)
 	// set STOP condition
 	I2C1->CTLR1 |= I2C_CTLR1_STOP;
 
-	// // wait for tx complete
-	// timeout = TIMEOUT_MAX;
-	// while ((!i2c_chk_evt(I2C_EVENT_MASTER_BYTE_RECEIVED)) && (timeout--))
-	//     ;
-	// if (timeout == -1)
-	// {
-	//     printf("i2c error: waiting for rx complete is timeout\r\n");
-	//     return -1;
-	// }
-
-	// we're happy
 	return 0;
 }
 
