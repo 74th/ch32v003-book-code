@@ -34,9 +34,13 @@
   - [ ] Arduino wch32v003
   - [ ] WCH SDK
   - [ ] register
-- [ ] Sleep Mode, Standby Mode - スリープモード、スタンバイモード
-  - [ ] LED Blink with Sleep Mode during Delay - Delay中はSleep Modeに落とすLチカ
-  - [ ] LED Blink with Standby Mode during Delay - Delay中はStanby Modeに落とすLチカ
+- [x] Sleep Mode, Standby Mode - スリープモード、スタンバイモード
+  - [x] LED Blink with Sleep Mode during Delay - Delay中はSleep Modeに落とすLチカ
+    - [x] WCH SDK
+    - [x] register
+  - [x] LED Blink with Standby Mode during Delay - Delay中はStanby Modeに落とすLチカ
+    - [x] WCH SDK
+    - [x] register
   - [ ] Resume from Sleep Mode by pressing a button - ボタンを押すとSleep Modeから復帰する
   - [ ] Resume from Standby Mode by pressing a button - ボタンを押すとStandby Modeから復帰する
   - [ ] Standby Mode operates during PWM - PWM中はStandbyが動作すること
