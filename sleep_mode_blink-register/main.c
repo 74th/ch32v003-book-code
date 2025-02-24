@@ -96,7 +96,7 @@ int main()
 		printf("go to sleep %ld\r\n", count);
 
 		// __WFI();
-		NVIC->SCTLR &= ~(1 << 3); // wfi
+		NVIC->SCTLR &= ~(1 << 3);
 		__ASM volatile("wfi");
 
 		count++;
