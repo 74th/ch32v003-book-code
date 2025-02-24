@@ -40,6 +40,7 @@
   - [ ] Resume from Sleep Mode by pressing a button - ボタンを押すとSleep Modeから復帰する
   - [ ] Resume from Standby Mode by pressing a button - ボタンを押すとStandby Modeから復帰する
   - [ ] Standby Mode operates during PWM - PWM中はStandbyが動作すること
+- [ ] WatchDogTimer
 - [ ] DMA
   - [ ] DMA blink LED - DMAでLチカ
   - [ ] DMA SPI
