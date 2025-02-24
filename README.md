@@ -14,11 +14,11 @@
   - [x] Arduino wch32v003 (Not Implemented)
   - [x] WCH SDK
   - [x] register
-- [ ] I2C Master - I2Cマスター
-  - [ ] Arduino Core CH32
-  - [ ] Arduino wch32v003
-  - [ ] WCH SDK
-  - [ ] register
+- [x] I2C Master - I2Cマスター
+  - [x] Arduino Core CH32
+  - [x] Arduino wch32v003
+  - [x] WCH SDK
+  - [x] register
 - [ ] I2C Slave - I2Cスレーブ
   - [ ] Arduino Core CH32cp
   - [ ] Arduino wch32v003
@@ -46,7 +46,6 @@
 - [ ] NeoPixel
   - [ ] CPU nop
   - [ ] DMA SPI
-- [ ]
 
 ## ライブラリ・環境
 
