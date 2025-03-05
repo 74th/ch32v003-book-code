@@ -25,6 +25,16 @@ int main()
 	GPIOA->OUTDR &= ~(1 << 1);
 	GPIOA->OUTDR |= (1 << 1);
 
+	// Independent Watch Dog Timerを2sのカウンタでセット
+	IWDG->CTLR = IWDG_WriteAccess_Enable;
+	// LSIは128kHzにつき、128分周でミリ秒になる
+	IWDG->PSCR = IWDG_Prescaler_128;
+	// 2,000ms = 2s でリセット
+	IWDG->RLDR = 2000 & 0xfff;
+
+	// Watch Dog Timerの開始
+	IWDG->CTLR = CTLR_KEY_Enable;
+
 	printf("start\r\n");
 
 	// リセットされたことが分かるようにLED2を点滅
@@ -51,5 +61,8 @@ int main()
 		Delay_Ms(250);
 		GPIOC->BSHR = (1 << (16 + 1));
 		Delay_Ms(250);
+
+		// Watch Dog Timerをリロード
+		IWDG->CTLR = CTLR_KEY_Reload;
 	}
 }
