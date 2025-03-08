@@ -24,8 +24,8 @@
   - [ ] Arduino wch32v003
   - [ ] WCH SDK
   - [ ] register
-- [ ] SPI Master - SPIマスター
-  - [ ] Arduino Core CH32
+- [x] SPI Master - SPIマスター
+  - [x] Arduino Core CH32
   - [ ] Arduino wch32v003
   - [ ] WCH SDK
   - [ ] register
@@ -34,7 +34,7 @@
   - [ ] Arduino wch32v003
   - [ ] WCH SDK
   - [ ] register
-- [x] Sleep Mode, Standby Mode - スリープモード、スタンバイモード
+- [ ] Sleep Mode, Standby Mode - スリープモード、スタンバイモード
   - [x] LED Blink with Sleep Mode during Delay - Delay中はSleep Modeに落とすLチカ
     - [x] WCH SDK
     - [x] register
@@ -43,7 +43,7 @@
     - [x] register
   - [ ] Resume from Sleep Mode by pressing a button - ボタンを押すとSleep Modeから復帰する
   - [ ] Resume from Standby Mode by pressing a button - ボタンを押すとStandby Modeから復帰する
-  - [ ] Standby Mode operates during PWM - PWM中はStandbyが動作すること
+  - [ ] Sleep Mode operates during PWM - PWM中はSleep Modeが動作すること
 - [ ] WatchDogTimer
 - [ ] DMA
   - [ ] DMA blink LED - DMAでLチカ
