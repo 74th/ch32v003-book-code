@@ -8,6 +8,7 @@ void Delay_Ms(uint32_t n);
 
 uint8_t transfer_spi(uint8_t data)
 {
+    // 常に書き込みと読み込みを両方行う
     while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET)
         ;
     SPI_I2S_SendData(SPI1, data);
