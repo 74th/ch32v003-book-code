@@ -17,6 +17,10 @@ int main()
 
 	SPI_init();
 
+	printf("SPI1->CTLR1 %04x\r\n", SPI1->CTLR1);
+	printf("SPI1->CTLR2 %04x\r\n", SPI1->CTLR2);
+	printf("GPIOC->CFGLR %08x\r\n", GPIOC->CFGLR);
+
 	printf("setup\r\n");
 
 #ifdef CH32V003_SPI_NSS_SOFTWARE_ANY_MANUAL
@@ -34,9 +38,9 @@ int main()
 
 	SPI_transfer_8(0x54);
 
-	Delay_Ms(500);
-
 	SPI_end();
+
+	Delay_Ms(500);
 
 	while (1)
 	{
