@@ -6,7 +6,7 @@ void HardFault_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void Delay_Init(void);
 void Delay_Ms(uint32_t n);
 
-uint8_t transfer_spi(uint8_t data, uint8_t length)
+uint8_t transfer_spi(uint8_t data)
 {
     while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET)
         ;
@@ -15,23 +15,14 @@ uint8_t transfer_spi(uint8_t data, uint8_t length)
     while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE) == RESET)
         ;
 
-    uint8_t b = SPI_I2S_ReceiveData(SPI1);
-
-    return b;
+    return SPI_I2S_ReceiveData(SPI1);
 }
 
 void send_spi_data(uint8_t *data, uint8_t length)
 {
     for (int i = 0; i < length; i++)
     {
-        while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET)
-            ;
-        SPI_I2S_SendData(SPI1, data[i]);
-
-        while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE) == RESET)
-            ;
-
-        SPI_I2S_ReceiveData(SPI1);
+        transfer_spi(data[i]);
     }
 }
 
@@ -39,14 +30,7 @@ void read_spi_data(uint8_t *data, uint8_t length)
 {
     for (int i = 0; i < length; i++)
     {
-        while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET)
-            ;
-        SPI_I2S_SendData(SPI1, 0);
-
-        while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE) == RESET)
-            ;
-
-        data[i] = SPI_I2S_ReceiveData(SPI1);
+        data[i] = transfer_spi(0);
     }
 }
 
