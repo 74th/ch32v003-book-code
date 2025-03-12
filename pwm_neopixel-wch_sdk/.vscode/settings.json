@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "*.jinja": "yaml",
-        "*.md": "markdown",
-        "bashrc": "shellscript",
-        "*.service": "plaintext",
-        "ch32v00x.h": "c"
-    }
-}
