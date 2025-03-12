@@ -59,8 +59,8 @@ int main()
 
 			ssd1306_drawImage(0, 0, BUNCHO, 64, 64, 0);
 			ssd1306_drawstr(80, 20, "@74th", 1);
-			ssd1306_drawstr(80, 32, "CH32V", 1);
-			ssd1306_drawstr(88, 44, "V003", 1);
+			ssd1306_drawstr(80, 34, "CH32V", 1);
+			ssd1306_drawstr(96, 44, "003", 1);
 			ssd1306_drawRect(75, 15, 128 - 70 - 5, 45, 1);
 			ssd1306_refresh();
 
