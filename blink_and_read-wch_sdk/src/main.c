@@ -27,16 +27,25 @@ int main(void)
 
     GPIO_InitTypeDef GPIO_InitStructure = {0};
 
+    // GPIOにクロック供給
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+
+    // 出力
     GPIO_InitStructure.GPIO_Pin = LED_PIN;
+    // GPIO_Mode_Out_PP に設定
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOC, &GPIO_InitStructure);
 
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+    // 入力
     GPIO_InitStructure.GPIO_Pin = BUTTON_PIN;
+    // GPIO_Mode_IPU: プルアップ
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    // GPIO_Mode_IPD: プルダウン
+    // GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;
+    // GPIO_Mode_IN_FLOATING: フローティング
+    // GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 
     printf("start\r\n");

@@ -9,7 +9,13 @@ void setup() {
   // USART
   Serial.println("init");
 
+  // 出力
   pinMode(LED, OUTPUT);
+
+  // 入力
+  // INPUT: フローティング
+  // INPUT_PULLUP: プルアップ
+  // INPUT_PULLDOWN: プルダウン
   pinMode(BUTTON, INPUT_PULLUP);
 
   printf("start\r\n");

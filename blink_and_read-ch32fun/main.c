@@ -3,6 +3,7 @@
 
 #include "ch32v003_GPIO_branchless.h"
 
+// ピンの定義
 #define LED_PIN GPIOv_from_PORT_PIN(GPIO_port_C, 0)
 #define BUTTON_PIN GPIOv_from_PORT_PIN(GPIO_port_A, 1)
 
@@ -18,10 +19,17 @@ int main()
 	GPIO_port_enable(GPIO_port_C);
 	GPIO_port_enable(GPIO_port_A);
 
-	// PC0 ピンを出力に設定
+	// PC0 出力
 	GPIO_pinMode(LED_PIN, GPIO_pinMode_O_pushPull, GPIO_Speed_10MHz);
-	// PA1 ピンを入力に設定
-	GPIO_pinMode(BUTTON_PIN, GPIO_pinMode_I_pullUp, GPIO_Speed_10MHz);
+
+	// PA1 入力
+	// GPIO_pinMode_I_floating: フローティング入力
+	// GPIO_pinMode_I_pullUp: プルアップ
+	// GPIO_pinMode_I_pullDown: プルダウン
+	GPIO_pinMode(BUTTON_PIN, GPIO_pinMode_I_pullUp, GPIO_Speed_In);
+	printf("GPIOA->CFGLR: %08X\r\n", GPIOA->CFGLR);
+	printf("GPIOA->OUTDR: %08X\r\n", GPIOA->OUTDR);
+	printf("GPIOA->BSHR: %08X\r\n", GPIOA->BSHR);
 
 	printf("start\r\n");
 
