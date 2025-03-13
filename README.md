@@ -1,11 +1,16 @@
 ## testing code - テストコード
 
-- [x] Simple LED Blink and button - 単純なLチカとボタン
+- [x] Blink and Read
   - [x] Arduino Core CH32
   - [x] Arduino wch32v003
   - [x] WCH SDK
-  - [x] ch32v003fun extralibs
+  - [x] ch32fun extralibs
   - [x] register
+- [ ] ADC
+  - [x] Arduino Core CH32
+  - [ ] WCH SDK
+  - [ ] ch32fun extralibs
+  - [ ] register
 - [x] Timer LED Blink - タイマーLチカ
   - [x] WCH SDK
   - [x] register
@@ -26,12 +31,11 @@
   - [ ] register
 - [x] SPI Master - SPIマスター
   - [x] Arduino Core CH32
-  - [ ] Arduino wch32v003
   - [ ] WCH SDK
+  - [ ] ch32fun
   - [ ] register
 - [ ] UART
   - [ ] Arduino Core CH32
-  - [ ] Arduino wch32v003
   - [ ] WCH SDK
   - [ ] register
 - [ ] Sleep Mode, Standby Mode - スリープモード、スタンバイモード
@@ -44,7 +48,7 @@
   - [ ] Resume from Sleep Mode by pressing a button - ボタンを押すとSleep Modeから復帰する
   - [ ] Resume from Standby Mode by pressing a button - ボタンを押すとStandby Modeから復帰する
   - [ ] Sleep Mode operates during PWM - PWM中はSleep Modeが動作すること
-- [ ] WatchDogTimer
+- [x] WatchDogTimer
 - [ ] DMA
   - [ ] DMA blink LED - DMAでLチカ
   - [ ] DMA SPI
