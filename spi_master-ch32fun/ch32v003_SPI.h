@@ -1,1 +1,1 @@
-../ch32v003fun/extralibs/ch32v003_SPI.h
+../ch32fun/extralibs/ch32v003_SPI.h
