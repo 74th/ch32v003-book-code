@@ -1,0 +1,48 @@
+{
+	"configurations": [
+		{
+			"name": "Debug Target",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/template.elf",
+			"args": [],
+			"stopAtEntry": true,
+			"cwd": "${workspaceFolder}",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"preLaunchTask": "run_flash_and_gdbserver",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			],
+			"svdPath": "${workspaceFolder}/../../misc/CH32V003xx.svd", // extension 'Peripheral Viewer' by mcu-debug (cortex-debug)
+			"miDebuggerPath": "gdb-multiarch",
+			"miDebuggerServerAddress": "127.0.0.1:3333",
+		},
+		{
+			"name": "Flash and run in terminal",
+			"type": "node-terminal",
+			"request": "launch",
+			"internalConsoleOptions": "neverOpen",
+			"command": "make closechlink clean; make flash monitor",
+		},
+		{
+			"name": "Compile and Flash",
+			"type": "node",
+			"request": "launch",
+			"internalConsoleOptions": "neverOpen",
+			"preLaunchTask" : "kill_all_tasks",
+			"postDebugTask": "run_flash",
+			"presentation": {
+				"hidden": false,
+				"group": "terminaloutput",
+				"order": 1
+			},
+			"runtimeExecutable": "echo"
+		}
+	]
+}
