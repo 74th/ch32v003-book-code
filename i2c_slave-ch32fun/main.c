@@ -17,12 +17,12 @@
 #define ROW4 GPIOv_from_PORT_PIN(GPIO_port_A, 1)
 #define ROW5 GPIOv_from_PORT_PIN(GPIO_port_C, 6)
 
-#define I2C_ADDRESS 0x70
+#define I2C_ADDRESS 0x10
 
 #define COLS_SIZE 7
 #define ROWS_SIZE 5
 
-volatile uint8_t i2c_registers[32] = {0x00};
+volatile uint8_t i2c_registers[0x30] = {0x00};
 
 uint8_t on_write_available = 0;
 uint8_t on_write_reg = 0;
@@ -55,7 +55,7 @@ int main()
 
 	Delay_Ms(1);
 
-	for (int i = 0x20; i < 0x20; i++)
+	for (int i = 0x20; i < 0x30; i++)
 	{
 		i2c_registers[i] = 0x10 * i;
 	}

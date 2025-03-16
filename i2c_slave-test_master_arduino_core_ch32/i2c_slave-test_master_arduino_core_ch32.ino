@@ -1,6 +1,6 @@
 #include "Wire.h"
 
-#define SHT31_I2C_ADDR 0x70
+#define SHT31_I2C_ADDR 0x10
 
 void setup() {
   Serial.begin(115200);
@@ -25,7 +25,7 @@ void loop() {
 
   // --- 0x10-0x13に書き込み ---
   uint8_t send_data[5] = { 0 };
-  send_data[0] = 0x10;
+  send_data[0] = 0x10; // 書き込み先アドレス
   send_data[1] = count;
   send_data[2] = count + 1;
   send_data[3] = count + 2;
@@ -48,17 +48,18 @@ void loop() {
 
   // 読み込みレジスタアドレスを最初に送る
   Wire.beginTransmission(SHT31_I2C_ADDR);
-  // Wire.write(0x20);
-  // delay(10);
+  Wire.write(0x20);
+  // endTransmission で送信するため、requestFromの前に行う
+  Wire.endTransmission();
+
   // データ読み込み
-  Wire.requestFrom(SHT31_I2C_ADDR, 4, 0x20, 0, true);
+  Wire.requestFrom(SHT31_I2C_ADDR, 4);
   receive_available = Wire.available();
   if (3 <= receive_available) {
     for (int i = 0; i < 4; i++) {
       receive_data[i] = Wire.read();
     }
   }
-  Wire.endTransmission();
 
   Serial.print("receive available: ");
   Serial.println(receive_available);
@@ -69,7 +70,7 @@ void loop() {
   }
   Serial.print("read :");
   for (int i = 0; i < 4; i++) {
-    Serial.print(receive_data[i]);
+    Serial.print(receive_data[i], HEX);
     if (i < 3) {
       Serial.print(" ");
     } else {
