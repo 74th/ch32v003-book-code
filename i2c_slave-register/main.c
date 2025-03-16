@@ -7,8 +7,11 @@ void I2C1_EV_IRQHandler(void) __attribute__((interrupt));
 void I2C1_ER_IRQHandler(void) __attribute__((interrupt));
 
 volatile uint8_t i2c_registers[0x30] = {0x00};
+volatile uint8_t i2c_start_position = 0;
 volatile uint8_t i2c_position = 0;
 volatile uint8_t i2c_first_receive = 0;
+uint8_t i2c_request_available = 0;
+uint8_t i2c_receive_available = 0;
 
 void I2C1_EV_IRQHandler(void)
 {
@@ -16,47 +19,50 @@ void I2C1_EV_IRQHandler(void)
 	STAR1 = I2C1->STAR1;
 	STAR2 = I2C1->STAR2;
 
-	// #ifdef FUNCONF_USE_UARTPRINTF
-	// 	printf("EV STAR1: 0x%04x STAR2: 0x%04x\r\n", STAR1, STAR2);
-	// #endif
-
 	I2C1->CTLR1 |= I2C_CTLR1_ACK;
 
 	if (STAR1 & I2C_STAR1_ADDR) // 0x0002
 	{
-		// #ifdef FUNCONF_USE_UARTPRINTF
-		// 		printf("ADDR\r\n");
-		// #endif
 		// 最初のイベント
-		// read でも write でも必ず最初に呼ばれる
-		i2c_position = 0;
+		i2c_first_receive = 1;
 	}
 
 	if (STAR1 & I2C_STAR1_RXNE) // 0x0040
 	{
-		// #ifdef FUNCONF_USE_UARTPRINTF
-		// 		printf("RXNE write event: pos:%d\r\n", i2c_position);
-		// #endif
-		// 1byte 受信
-		I2C1->DATAR;
+		// 1byte の write イベント（master -> slave）
+		uint8_t v = I2C1->DATAR;
+		if (i2c_first_receive)
+		{
+			// 最初の1バイトはレジスタアドレスとする
+			i2c_start_position = v;
+			i2c_position = v;
+			i2c_first_receive = 0;
+		}
+		else if (i2c_position < sizeof(i2c_registers))
+		{
+			// 2バイト目以降
+			i2c_registers[i2c_position] = v;
+			i2c_position++;
+			i2c_receive_available += 1;
+		}
+		else
+		{
+			// 何もしない
+		}
 	}
 
 	if (STAR1 & I2C_STAR1_TXE) // 0x0080
 	{
 		// 1byte の read イベント（slave -> master）
-		// #ifdef FUNCONF_USE_UARTPRINTF
-		// 		printf("TXE write event: pos:%d\r\n", i2c_position);
-		// #endif
-		if (i2c_position < 5)
+		if (i2c_position < sizeof(i2c_registers))
 		{
-			// 1byte 送信
-			uint8_t data = 0x74;
-			I2C1->DATAR = data;
+			I2C1->DATAR = i2c_registers[i2c_position];
 			i2c_position++;
+			i2c_request_available += 1;
 		}
 		else
 		{
-			// 1byte 送信
+			// ゼロ値を送る
 			I2C1->DATAR = 0x00;
 		}
 	}
@@ -100,46 +106,59 @@ int main()
 	GPIOC->CFGLR &= ~(0xf << (4 * 2));
 	GPIOC->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_OD_AF) << (4 * 2);
 
-	// Reset I2C1 to init all regs
+	// I2Cモジュール初期化のためにI2C1をリセット
 	RCC->APB1PRSTR |= RCC_APB1Periph_I2C1;
 	RCC->APB1PRSTR &= ~RCC_APB1Periph_I2C1;
 
 	I2C1->CTLR1 |= I2C_CTLR1_SWRST;
 	I2C1->CTLR1 &= ~I2C_CTLR1_SWRST;
 
-	// Set module clock frequency
+	// I2Cモジュールクロック周波数設定
 	uint32_t prerate = 2000000; // I2C Logic clock rate, must be higher than the bus clock rate
 	I2C1->CTLR2 |= (FUNCONF_SYSTEM_CORE_CLOCK / prerate) & I2C_CTLR2_FREQ;
 
-	// Enable interrupts
+	// 割り込み
 	I2C1->CTLR2 |= I2C_CTLR2_ITBUFEN;
-	I2C1->CTLR2 |= I2C_CTLR2_ITEVTEN; // Event interrupt
-	I2C1->CTLR2 |= I2C_CTLR2_ITERREN; // Error interrupt
-
-	NVIC_EnableIRQ(I2C1_EV_IRQn); // Event interrupt
+	I2C1->CTLR2 |= I2C_CTLR2_ITEVTEN; // イベント割り込み
+	I2C1->CTLR2 |= I2C_CTLR2_ITERREN; // エラー割り込み
+	NVIC_EnableIRQ(I2C1_EV_IRQn);	  // イベント割り込み
 	NVIC_SetPriority(I2C1_EV_IRQn, 2 << 4);
-	NVIC_EnableIRQ(I2C1_ER_IRQn); // Error interrupt
+	NVIC_EnableIRQ(I2C1_ER_IRQn); // エラー割り込み
 
-	// Set clock configuration
-	uint32_t clockrate = 1000000;																	 // I2C Bus clock rate, must be lower than the logic clock rate
+	// I2Cクロック設定
+	uint32_t clockrate = 1000000;
 	I2C1->CKCFGR = ((FUNCONF_SYSTEM_CORE_CLOCK / (3 * clockrate)) & I2C_CKCFGR_CCR) | I2C_CKCFGR_FS; // Fast mode 33% duty cycle
 
-	// Set I2C address
+	// I2Cアドレス設定
 	I2C1->OADDR1 = I2C_ADDRESS << 1;
 
-	// Enable I2C
+	// I2C有効化
 	I2C1->CTLR1 |= I2C_CTLR1_PE;
 
-	// Acknowledge the first address match event when it happens
+	// ACK有効化
 	I2C1->CTLR1 |= I2C_CTLR1_ACK;
+
+	for (int i = 0; i < 4; i++)
+	{
+		i2c_registers[0x20 + i] = 0x10 * i;
+	}
 
 	printf("start\r\n");
 
 	while (1)
 	{
-		// loop();
-		Delay_Ms(100);
-		// raw_adc_test();
-		// Delay_Ms(500);
+		if (i2c_request_available > 0)
+		{
+			printf("request: count=%d, start=%x, length=%d\r\n", i2c_request_available, i2c_start_position, i2c_position - i2c_start_position);
+			printf("reg[0x20]: %x %x %x %x\r\n", i2c_registers[0x20], i2c_registers[0x21], i2c_registers[0x22], i2c_registers[0x23]);
+			i2c_request_available = 0;
+		}
+
+		if (i2c_receive_available > 0)
+		{
+			printf("receive: count=%d, start=%x, length=%d\r\n", i2c_receive_available, i2c_start_position, i2c_position - i2c_start_position);
+			printf("reg[0x10]: %x %x %x %x\r\n", i2c_registers[0x10], i2c_registers[0x11], i2c_registers[0x12], i2c_registers[0x13]);
+			i2c_receive_available = 0;
+		}
 	}
 }
