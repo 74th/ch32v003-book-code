@@ -21,21 +21,12 @@ uint8_t i2c_receive_available = 0;
 void I2C1_EV_IRQHandler(void)
 {
     uint32_t event = I2C_GetLastEvent(I2C1);
-    // uint16_t STAR1, STAR2 __attribute__((unused));
-    // STAR1 = I2C1->STAR1;
-    // STAR2 = I2C1->STAR2;
 
     I2C1->CTLR1 |= I2C_CTLR1_ACK;
 
-    // if (STAR1 & I2C_STAR1_ADDR) // 0x0002
-    // {
-    //     // 最初のイベント
-    //     // read でも write でも必ず最初に呼ばれる
-    //     i2c_first_receive = 1;
-    //     i2c_position = 0;
-    // }
     if (event == I2C_EVENT_SLAVE_RECEIVER_ADDRESS_MATCHED)
     {
+        // 最初のイベント
         i2c_first_receive = 1;
     }
     if (event == I2C_EVENT_SLAVE_BYTE_RECEIVED)
@@ -73,65 +64,13 @@ void I2C1_EV_IRQHandler(void)
         i2c_position++;
         i2c_request_available++;
     }
-
-    // if (STAR1 & I2C_STAR1_RXNE) // 0x0040
-    // {
-    //     // 1byte 受信
-    //     uint8_t v = I2C1->DATAR;
-    //     if (i2c_first_receive)
-    //     {
-    //         // 1バイト目の受信
-    //         i2c_position = v;
-    //         i2c_first_receive = 0;
-    //     }
-    //     else if (i2c_position < sizeof(i2c_registers))
-    //     {
-    //         // 2バイト目以降の受信
-    //         i2c_registers[i2c_position] = v;
-    //         i2c_position++;
-    //     }
-    //     else
-    //     {
-    //         // 2バイト目以降の受信、レジスタ範囲外
-    //         // 何もしない
-    //     }
-    // }
-
-    // if (STAR1 & I2C_STAR1_TXE) // 0x0080
-    // {
-    //     // 1byte リクエスト
-    //     if (i2c_position < sizeof(i2c_registers))
-    //     {
-    //         // 1byte 送信
-    //         // I2C_SendData(I2C1, i2c_registers[i2c_position]);
-    //         i2c_position++;
-    //     }
-    //     else
-    //     {
-    //         // 1byte 送信
-    //         // I2C_SendData(I2C1, 0x00);
-    //         I2C1->DATAR = 0x00;
-    //     }
-    // }
 }
 
 void I2C1_ER_IRQHandler(void)
 {
-    uint16_t STAR1 = I2C1->STAR1;
-
-    if (STAR1 & I2C_STAR1_BERR)
+    if (I2C_GetITStatus(I2C1, I2C_IT_AF))
     {
-        I2C1->STAR1 &= ~(I2C_STAR1_BERR);
-    }
-
-    if (STAR1 & I2C_STAR1_ARLO)
-    {
-        I2C1->STAR1 &= ~(I2C_STAR1_ARLO);
-    }
-
-    if (STAR1 & I2C_STAR1_AF)
-    {
-        I2C1->STAR1 &= ~(I2C_STAR1_AF);
+        I2C_ClearITPendingBit(I2C1, I2C_IT_AF);
     }
 }
 
@@ -180,7 +119,6 @@ int main(void)
     I2C_InitTSturcture.I2C_Mode = I2C_Mode_I2C;
     I2C_InitTSturcture.I2C_DutyCycle = I2C_DutyCycle_2;
     I2C_InitTSturcture.I2C_OwnAddress1 = I2C_ADDRESS << 1;
-    // I2C_InitTSturcture.I2C_OwnAddress1 = I2C_ADDRESS;
     I2C_InitTSturcture.I2C_Ack = I2C_Ack_Enable;
     I2C_InitTSturcture.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
     I2C_Init(I2C1, &I2C_InitTSturcture);
