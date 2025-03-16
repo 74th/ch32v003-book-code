@@ -22,7 +22,8 @@ void I2C1_EV_IRQHandler(void)
 {
     uint32_t event = I2C_GetLastEvent(I2C1);
 
-    I2C1->CTLR1 |= I2C_CTLR1_ACK;
+    // これがないと動かない？？
+    I2C_AcknowledgeConfig(I2C1, ENABLE);
 
     if (event == I2C_EVENT_SLAVE_RECEIVER_ADDRESS_MATCHED)
     {
@@ -31,6 +32,7 @@ void I2C1_EV_IRQHandler(void)
     }
     if (event == I2C_EVENT_SLAVE_BYTE_RECEIVED)
     {
+        // 1byte の受信イベント（slave -> master）
         uint8_t v = I2C_ReceiveData(I2C1);
         if (i2c_first_receive)
         {
@@ -52,14 +54,10 @@ void I2C1_EV_IRQHandler(void)
             // 何もしない
         }
     }
-    if (event == I2C_EVENT_SLAVE_TRANSMITTER_ADDRESS_MATCHED)
+    if (event == I2C_EVENT_SLAVE_TRANSMITTER_ADDRESS_MATCHED ||
+        event == I2C_EVENT_SLAVE_BYTE_TRANSMITTED)
     {
-        I2C_SendData(I2C1, i2c_registers[i2c_position]);
-        i2c_position++;
-        i2c_request_available += 1;
-    }
-    if (event == I2C_EVENT_SLAVE_BYTE_TRANSMITTED)
-    {
+        // 1byte の送信イベント（master -> slave）
         I2C_SendData(I2C1, i2c_registers[i2c_position]);
         i2c_position++;
         i2c_request_available++;

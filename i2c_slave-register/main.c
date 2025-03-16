@@ -29,7 +29,7 @@ void I2C1_EV_IRQHandler(void)
 
 	if (STAR1 & I2C_STAR1_RXNE) // 0x0040
 	{
-		// 1byte の write イベント（master -> slave）
+		// 1byte の受信イベント（master -> slave）
 		uint8_t v = I2C1->DATAR;
 		if (i2c_first_receive)
 		{
@@ -53,7 +53,7 @@ void I2C1_EV_IRQHandler(void)
 
 	if (STAR1 & I2C_STAR1_TXE) // 0x0080
 	{
-		// 1byte の read イベント（slave -> master）
+		// 1byte の送信イベント（slave -> master）
 		if (i2c_position < sizeof(i2c_registers))
 		{
 			I2C1->DATAR = i2c_registers[i2c_position];
