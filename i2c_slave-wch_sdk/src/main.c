@@ -12,33 +12,40 @@ void Delay_Init(void);
 void Delay_Ms(uint32_t n);
 
 volatile uint8_t i2c_registers[0x30] = {0x00};
+volatile uint8_t i2c_start_position = 0;
 volatile uint8_t i2c_position = 0;
-uint8_t i2c_first_receive = 0;
+volatile uint8_t i2c_first_receive = 0;
+uint8_t i2c_request_available = 0;
+uint8_t i2c_receive_available = 0;
 
 void I2C1_EV_IRQHandler(void)
 {
-    uint16_t STAR1, STAR2 __attribute__((unused));
-    STAR1 = I2C1->STAR1;
-    STAR2 = I2C1->STAR2;
+    uint32_t event = I2C_GetLastEvent(I2C1);
+    // uint16_t STAR1, STAR2 __attribute__((unused));
+    // STAR1 = I2C1->STAR1;
+    // STAR2 = I2C1->STAR2;
 
     I2C1->CTLR1 |= I2C_CTLR1_ACK;
 
-    if (STAR1 & I2C_STAR1_ADDR) // 0x0002
+    // if (STAR1 & I2C_STAR1_ADDR) // 0x0002
+    // {
+    //     // 最初のイベント
+    //     // read でも write でも必ず最初に呼ばれる
+    //     i2c_first_receive = 1;
+    //     i2c_position = 0;
+    // }
+    if (event == I2C_EVENT_SLAVE_RECEIVER_ADDRESS_MATCHED)
     {
-        // 最初のイベント
-        // read でも write でも必ず最初に呼ばれる
         i2c_first_receive = 1;
-        i2c_position = 0;
     }
-
-    if (STAR1 & I2C_STAR1_RXNE) // 0x0040
+    if (event == I2C_EVENT_SLAVE_BYTE_RECEIVED)
     {
-        // 1byte 受信
-        uint8_t v = I2C1->DATAR;
+        uint8_t v = I2C_ReceiveData(I2C1);
         if (i2c_first_receive)
         {
             // 1バイト目の受信
             i2c_position = v;
+            i2c_start_position = v;
             i2c_first_receive = 0;
         }
         else if (i2c_position < sizeof(i2c_registers))
@@ -46,6 +53,7 @@ void I2C1_EV_IRQHandler(void)
             // 2バイト目以降の受信
             i2c_registers[i2c_position] = v;
             i2c_position++;
+            i2c_receive_available += 1;
         }
         else
         {
@@ -53,23 +61,58 @@ void I2C1_EV_IRQHandler(void)
             // 何もしない
         }
     }
-
-    if (STAR1 & I2C_STAR1_TXE) // 0x0080
+    if (event == I2C_EVENT_SLAVE_TRANSMITTER_ADDRESS_MATCHED)
     {
-        // 1byte リクエスト
-        if (i2c_position < sizeof(i2c_registers))
-        {
-            // 1byte 送信
-            // I2C_SendData(I2C1, i2c_registers[i2c_position]);
-            i2c_position++;
-        }
-        else
-        {
-            // 1byte 送信
-            // I2C_SendData(I2C1, 0x00);
-            I2C1->DATAR = 0x00;
-        }
+        I2C_SendData(I2C1, i2c_registers[i2c_position]);
+        i2c_position++;
+        i2c_request_available += 1;
     }
+    if (event == I2C_EVENT_SLAVE_BYTE_TRANSMITTED)
+    {
+        I2C_SendData(I2C1, i2c_registers[i2c_position]);
+        i2c_position++;
+        i2c_request_available++;
+    }
+
+    // if (STAR1 & I2C_STAR1_RXNE) // 0x0040
+    // {
+    //     // 1byte 受信
+    //     uint8_t v = I2C1->DATAR;
+    //     if (i2c_first_receive)
+    //     {
+    //         // 1バイト目の受信
+    //         i2c_position = v;
+    //         i2c_first_receive = 0;
+    //     }
+    //     else if (i2c_position < sizeof(i2c_registers))
+    //     {
+    //         // 2バイト目以降の受信
+    //         i2c_registers[i2c_position] = v;
+    //         i2c_position++;
+    //     }
+    //     else
+    //     {
+    //         // 2バイト目以降の受信、レジスタ範囲外
+    //         // 何もしない
+    //     }
+    // }
+
+    // if (STAR1 & I2C_STAR1_TXE) // 0x0080
+    // {
+    //     // 1byte リクエスト
+    //     if (i2c_position < sizeof(i2c_registers))
+    //     {
+    //         // 1byte 送信
+    //         // I2C_SendData(I2C1, i2c_registers[i2c_position]);
+    //         i2c_position++;
+    //     }
+    //     else
+    //     {
+    //         // 1byte 送信
+    //         // I2C_SendData(I2C1, 0x00);
+    //         I2C1->DATAR = 0x00;
+    //     }
+    // }
 }
 
 void I2C1_ER_IRQHandler(void)
@@ -157,14 +200,30 @@ int main(void)
     // printf("I2C1->CKCFGR: %4x\r\n", I2C1->CKCFGR);
     // printf("I2C1->OADDR1: %4x\r\n", I2C1->OADDR1);
 
+    for (int i = 0; i < 4; i++)
+    {
+        i2c_registers[0x20 + i] = 0x10 * i;
+    }
+
     Delay_Ms(100);
 
     printf("start\r\n");
 
-    int count = 0;
-
     while (1)
     {
+        if (i2c_request_available > 0)
+        {
+            printf("request: count=%d, start=%x, length=%d\r\n", i2c_request_available, i2c_start_position, i2c_position - i2c_start_position);
+            printf("reg[0x20]: %x %x %x %x\r\n", i2c_registers[0x20], i2c_registers[0x21], i2c_registers[0x22], i2c_registers[0x23]);
+            i2c_request_available = 0;
+        }
+
+        if (i2c_receive_available > 0)
+        {
+            printf("receive: count=%d, start=%x, length=%d\r\n", i2c_receive_available, i2c_start_position, i2c_position - i2c_start_position);
+            printf("reg[0x10]: %x %x %x %x\r\n", i2c_registers[0x10], i2c_registers[0x11], i2c_registers[0x12], i2c_registers[0x13]);
+            i2c_receive_available = 0;
+        }
     }
 }
 
