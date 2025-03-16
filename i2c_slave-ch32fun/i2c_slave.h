@@ -1,0 +1,1 @@
+../ch32fun/examples/i2c_slave/i2c_slave.h
