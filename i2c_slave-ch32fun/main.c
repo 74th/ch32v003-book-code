@@ -1,26 +1,8 @@
 #include "ch32fun.h"
 #include "i2c_slave.h"
 #include <stdio.h>
-#include <stdbool.h>
-
-#define COL1 GPIOv_from_PORT_PIN(GPIO_port_D, 0)
-#define COL2 GPIOv_from_PORT_PIN(GPIO_port_D, 3)
-#define COL3 GPIOv_from_PORT_PIN(GPIO_port_D, 2)
-#define COL4 GPIOv_from_PORT_PIN(GPIO_port_C, 7)
-#define COL5 GPIOv_from_PORT_PIN(GPIO_port_D, 4)
-#define COL6 GPIOv_from_PORT_PIN(GPIO_port_D, 5)
-#define COL7 GPIOv_from_PORT_PIN(GPIO_port_D, 6)
-
-#define ROW1 GPIOv_from_PORT_PIN(GPIO_port_C, 3)
-#define ROW2 GPIOv_from_PORT_PIN(GPIO_port_C, 4)
-#define ROW3 GPIOv_from_PORT_PIN(GPIO_port_C, 5)
-#define ROW4 GPIOv_from_PORT_PIN(GPIO_port_A, 1)
-#define ROW5 GPIOv_from_PORT_PIN(GPIO_port_C, 6)
 
 #define I2C_ADDRESS 0x10
-
-#define COLS_SIZE 7
-#define ROWS_SIZE 5
 
 volatile uint8_t i2c_registers[0x30] = {0x00};
 
