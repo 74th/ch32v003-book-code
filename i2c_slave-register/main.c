@@ -143,6 +143,11 @@ int main()
 		i2c_registers[0x20 + i] = 0x10 * i;
 	}
 
+	// printf("I2C1->CTLR1: %4x\r\n", I2C1->CTLR1);
+	// printf("I2C1->CTLR2: %4x\r\n", I2C1->CTLR2);
+	// printf("I2C1->CKCFGR: %4x\r\n", I2C1->CKCFGR);
+	// printf("I2C1->OADDR1: %4x\r\n", I2C1->OADDR1);
+
 	printf("start\r\n");
 
 	while (1)
