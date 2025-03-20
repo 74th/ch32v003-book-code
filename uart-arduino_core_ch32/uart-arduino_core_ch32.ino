@@ -13,6 +13,12 @@ void setup() {
   // 自動キャリブレーションをオン
   Serial.write(CMD_TURN_ON_SELF_CALIBRATION, sizeof CMD_TURN_ON_SELF_CALIBRATION);
 
+  delay(1);
+
+  // キャリブレーション命令の応答
+  uint8_t read_buf[9] = { 0 };
+  Serial.readBytes(read_buf, sizeof(read_buf));
+
   // OLED初期化
   oled.begin();
 
@@ -24,13 +30,23 @@ uint32_t loop_count = 0;
 void loop() {
   loop_count++;
 
-  // 応答は9バイトの筈であるが、10バイトに設定しないと、
-  // 前のチェックサムバイトがとれてしまう
-  uint8_t read_buf[10] = { 0 };
+  uint8_t read_buf[9] = { 0 };
 
   // CO2読み取り
   Serial.write(CMD_READ_CO2_CONNECTION, sizeof(CMD_READ_CO2_CONNECTION));
-  Serial.readBytes(read_buf, sizeof(read_buf));
+  // Serial.readBytes() にはタイムアウト機能が付いており、常にこれを使う
+  uint32_t len = Serial.readBytes(read_buf, sizeof(read_buf));
+  if(len<9)
+  {
+    // タイムアウト
+    oled.clear();
+    oled.setCursor(0, 0);
+    oled.printf(6, 8, "loop: %5d", loop_count);
+    oled.printf(6, 20, "timeout");
+    oled.display();
+    delay(1000);
+    return;
+  }
 
   if (read_buf[0] != 0xff) {
     // start byte不正
@@ -42,6 +58,17 @@ void loop() {
     delay(1000);
     return;
   }
+  if (read_buf[1] != 0x86) {
+    // cmd byte不正
+    oled.clear();
+    oled.setCursor(0, 0);
+    oled.printf(6, 8, "loop: %5d", loop_count);
+    oled.printf(6, 20, "invalid cmd byte");
+    oled.display();
+    delay(1000);
+    return;
+  }
+
 
   uint8_t c = 0;
   for (int i = 1; i < 8; i++) {
