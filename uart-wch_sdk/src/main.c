@@ -1,13 +1,114 @@
 #include <ch32v00x.h>
 #include <debug.h>
 
-#define SHT31_I2C_ADDR 0x44
+#define TIMEOUT_MAX 100000
 
 void NMI_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void HardFault_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 
 uint8_t CMD_READ_CO2_CONNECTION[9] = {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79};
 uint8_t CMD_TURN_ON_SELF_CALIBRATION[9] = {0xFF, 0x01, 0x79, 0xA0, 0x00, 0x00, 0x00, 0x00, 0xE6};
+
+uint16_t read_uart_with_timeout(uint8_t *buf, uint16_t len)
+{
+    for (uint16_t i = 0; i < len; i++)
+    {
+        int32_t timeout = TIMEOUT_MAX;
+        while (timeout-- && USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET)
+            ;
+        ;
+
+        if (timeout < 0)
+        {
+            return i;
+        }
+
+        buf[i] = USART_ReceiveData(USART1);
+    }
+
+    return len;
+}
+
+int loop(uint32_t loop_count)
+{
+    uint8_t read_buf[9] = {0};
+    printf("loop %d\r\n", loop_count++);
+
+    for (int i = 0; i < sizeof(CMD_READ_CO2_CONNECTION); i++)
+    {
+        while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET)
+            ;
+
+        USART_SendData(USART1, CMD_READ_CO2_CONNECTION[i]);
+
+        while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
+            ;
+    }
+
+    uint16_t read_len = 0;
+
+    // 0xff 0x86 が読めるまで読み進める
+    while (1)
+    {
+        read_len = read_uart_with_timeout(&read_buf[0], 1);
+        if (read_len == 0)
+        {
+            printf("read timeout\r\n");
+            Delay_Ms(1000);
+
+            return 1;
+        }
+        if (read_buf[0] != 0xff)
+        {
+            // printf("invalid start byte: %0x\r\n", read_buf[0]);
+            continue;
+        }
+
+        read_len = read_uart_with_timeout(&read_buf[1], 1);
+        if (read_len == 0)
+        {
+            printf("read timeout\r\n");
+            Delay_Ms(1000);
+            return 1;
+        }
+        if (read_buf[1] != 0x86)
+        {
+            // printf("invalid command byte: %02x\r\n", read_buf[1]);
+            continue;
+        }
+
+        break;
+    }
+
+    read_len = read_uart_with_timeout(&read_buf[2], 7);
+    if (read_len < 7)
+    {
+        printf("timeout\r\n");
+        Delay_Ms(1000);
+    }
+
+    // for (int i = 0; i < sizeof(read_buf); i++)
+    // {
+    //     printf("0x%02X ", read_buf[i]);
+    // }
+    // printf("\r\n");
+
+    // チェックサム
+    uint8_t c = 0;
+    for (int i = 1; i < 8; i++)
+    {
+        c += read_buf[i];
+    }
+    if (0xff - c + 1 != read_buf[8])
+    {
+        printf("invalid checksum\r\n");
+    }
+
+    uint16_t co2 = read_buf[2] * 256 + read_buf[3];
+    printf("CO2: %5d ppm\r\n", co2);
+
+    return 0;
+}
 
 int main(void)
 {
@@ -33,7 +134,7 @@ int main(void)
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-    GPIO_Init(GPIOC, &GPIO_InitStructure);
+    GPIO_Init(GPIOD, &GPIO_InitStructure);
 
     // PD6: RX
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
@@ -67,29 +168,7 @@ int main(void)
 
     while (1)
     {
-        uint8_t read_buf[9] = {0};
-        printf("loop %d\r\n", count++);
-
-        for (int i = 0; i < sizeof(CMD_READ_CO2_CONNECTION); i++)
-        {
-            USART_SendData(USART1, CMD_READ_CO2_CONNECTION[i]);
-            while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-                ;
-        }
-
-        printf("@@1\r\n");
-
-        for (int j = 0; j < sizeof(read_buf); j++)
-        {
-            while (USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET)
-                ;
-            read_buf[j] = USART_ReceiveData(USART1);
-        }
-
-        printf("@@2\r\n");
-
-        printf("read_buf: %2x %2x\r\n", read_buf[0], read_buf[1]);
-
+        loop(count++);
         Delay_Ms(1000);
     }
 }
