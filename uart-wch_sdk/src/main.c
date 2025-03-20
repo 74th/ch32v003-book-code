@@ -29,21 +29,26 @@ uint16_t read_uart_with_timeout(uint8_t *buf, uint16_t len)
     return len;
 }
 
+void send_uart(uint8_t *buf, uint16_t len)
+{
+    for (uint16_t i = 0; i < len; i++)
+    {
+        while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET)
+            ;
+
+        USART_SendData(USART1, buf[i]);
+
+        while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
+            ;
+    }
+}
+
 int loop(uint32_t loop_count)
 {
     uint8_t read_buf[9] = {0};
     printf("loop %d\r\n", loop_count++);
 
-    for (int i = 0; i < sizeof(CMD_READ_CO2_CONNECTION); i++)
-    {
-        while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET)
-            ;
-
-        USART_SendData(USART1, CMD_READ_CO2_CONNECTION[i]);
-
-        while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-            ;
-    }
+    send_uart(CMD_READ_CO2_CONNECTION, sizeof(CMD_TURN_ON_SELF_CALIBRATION));
 
     uint16_t read_len = 0;
 
@@ -155,11 +160,17 @@ int main(void)
 
     printf("send turn on self calibration\r\n");
 
-    for (int i = 0; i < sizeof(CMD_TURN_ON_SELF_CALIBRATION); i++)
+    // セルフキャリブレーションの有効化
+    send_uart(CMD_TURN_ON_SELF_CALIBRATION, sizeof(CMD_TURN_ON_SELF_CALIBRATION));
+
+    Delay_Ms(1);
+
+    // キャリブレーション命令の応答を読み捨てる
+    uint8_t read_buf[9] = {0};
+    uint32_t read_len = read_uart_with_timeout(read_buf, 9);
+    if (read_len < 9)
     {
-        USART_SendData(USART1, CMD_TURN_ON_SELF_CALIBRATION[i]);
-        while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-            ;
+        printf("timeout %d\r\n", read_len);
     }
 
     printf("start\r\n");
