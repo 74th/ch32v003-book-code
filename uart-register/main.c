@@ -1,8 +1,7 @@
 #include "ch32fun.h"
 #include <stdio.h>
 
-#define I2C_SLAVE_ADDRESS 0x44
-#define LOOP_MS 1000
+#define TIMEOUT_MAX 100000
 
 uint8_t CMD_READ_CO2_CONNECTION[9] = {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79};
 uint8_t CMD_TURN_ON_SELF_CALIBRATION[9] = {0xFF, 0x01, 0x79, 0xA0, 0x00, 0x00, 0x00, 0x00, 0xE6};
@@ -27,6 +26,106 @@ void setup_uart()
 
 	USART1->BRR = (((FUNCONF_SYSTEM_CORE_CLOCK) + (9600) / 2) / (9600));
 	USART1->CTLR1 |= CTLR1_UE_Set;
+}
+
+uint16_t read_uart_with_timeout(uint8_t *buf, uint16_t len)
+{
+	for (uint16_t i = 0; i < len; i++)
+	{
+		int32_t timeout = TIMEOUT_MAX;
+		while (timeout-- && !(USART1->STATR & USART_FLAG_RXNE))
+			;
+
+		if (timeout < 0)
+		{
+			return i;
+		}
+
+		buf[i] = USART1->DATAR;
+	}
+
+	return len;
+}
+
+int loop(uint32_t loop_count)
+{
+	uint8_t read_buf[9] = {0};
+	printf("loop %d\r\n", loop_count++);
+
+	for (int i = 0; i < sizeof(CMD_READ_CO2_CONNECTION); i++)
+	{
+		while (!(USART1->STATR & USART_FLAG_TC))
+			;
+
+		USART1->DATAR = CMD_READ_CO2_CONNECTION[i];
+
+		while (!(USART1->STATR & USART_FLAG_TXE))
+			;
+	}
+
+	uint16_t read_len = 0;
+
+	// 0xff 0x86 が読めるまで読み進める
+	while (1)
+	{
+		read_len = read_uart_with_timeout(&read_buf[0], 1);
+		if (read_len == 0)
+		{
+			printf("read timeout\r\n");
+			Delay_Ms(1000);
+
+			return 1;
+		}
+		if (read_buf[0] != 0xff)
+		{
+			// printf("invalid start byte: %0x\r\n", read_buf[0]);
+			continue;
+		}
+
+		read_len = read_uart_with_timeout(&read_buf[1], 1);
+		if (read_len == 0)
+		{
+			printf("read timeout\r\n");
+			Delay_Ms(1000);
+			return 1;
+		}
+		if (read_buf[1] != 0x86)
+		{
+			// printf("invalid command byte: %02x\r\n", read_buf[1]);
+			continue;
+		}
+
+		break;
+	}
+
+	read_len = read_uart_with_timeout(&read_buf[2], 7);
+	if (read_len < 7)
+	{
+		printf("timeout\r\n");
+		Delay_Ms(1000);
+	}
+
+	// for (int i = 0; i < sizeof(read_buf); i++)
+	// {
+	//     printf("0x%02X ", read_buf[i]);
+	// }
+	// printf("\r\n");
+
+	// チェックサム
+	uint8_t c = 0;
+	for (int i = 1; i < 8; i++)
+	{
+		c += read_buf[i];
+	}
+	if (0xff - c + 1 != read_buf[8])
+	{
+		printf("invalid checksum\r\n");
+	}
+
+	uint16_t co2 = read_buf[2] * 256 + read_buf[3];
+	printf("CO2: %5d ppm\r\n", co2);
+
+	return 0;
 }
 
 int main()
@@ -55,54 +154,7 @@ int main()
 
 	while (1)
 	{
-		uint8_t read_buf[9] = {0};
-		printf("loop count: %u\r\n", loop_count);
-
-		for (int i = 0; i < sizeof(CMD_READ_CO2_CONNECTION); i++)
-		{
-			while (!(USART1->STATR & USART_FLAG_TC))
-				;
-			USART1->DATAR = CMD_READ_CO2_CONNECTION[i];
-		}
-
-		for (int i = 0; i < 9; i++)
-		{
-			while (!(USART1->STATR & USART_FLAG_RXNE))
-				;
-			read_buf[i] = USART1->DATAR;
-		}
-
-		if (read_buf[0] != 0xFF)
-		{
-			printf("invalid start byte\r\n");
-			Delay_Ms(1000);
-			continue;
-		}
-
-		uint8_t c = 0;
-		for (int i = 1; i <= 7; i++)
-		{
-
-			c += read_buf[i];
-		}
-		if (0xff - c + 1 != read_buf[8])
-		{
-			printf("checksum error\r\n");
-			Delay_Ms(1000);
-			continue;
-		}
-
-		// for (int i = 0; i < 9; i++)
-		// {
-		// 	printf("0x%02X ", read_buf[i]);
-		// }
-		// printf("\r\n");
-
-		uint16_t co2_ppm = (read_buf[2] << 8) | read_buf[3];
-
-		printf("CO2: %u ppm\r\n", co2_ppm);
-
+		loop(loop_count++);
 		Delay_Ms(1000);
-		loop_count++;
 	}
 }
