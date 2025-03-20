@@ -47,6 +47,20 @@ uint16_t read_uart_with_timeout(uint8_t *buf, uint16_t len)
 	return len;
 }
 
+void write_uart(uint8_t *buf, uint16_t len)
+{
+	for (uint16_t i = 0; i < len; i++)
+	{
+		while (!(USART1->STATR & USART_FLAG_TC))
+			;
+
+		USART1->DATAR = buf[i];
+
+		while (!(USART1->STATR & USART_FLAG_TXE))
+			;
+	}
+}
+
 int loop(uint32_t loop_count)
 {
 	uint8_t read_buf[9] = {0};
@@ -141,12 +155,14 @@ int main()
 
 	Delay_Ms(100);
 
-	for (int i = 0; i < sizeof(CMD_TURN_ON_SELF_CALIBRATION); i++)
-	{
-		while (!(USART1->STATR & USART_FLAG_TC))
-			;
-		USART1->DATAR = CMD_TURN_ON_SELF_CALIBRATION[i];
-	}
+	// キャリブレーション命令
+	write_uart(CMD_TURN_ON_SELF_CALIBRATION, sizeof(CMD_TURN_ON_SELF_CALIBRATION));
+
+	Delay_Ms(1);
+
+	// キャリブレーション命令のレスポンスを読み捨てる
+	uint8_t read_buf[9] = {0};
+	read_uart_with_timeout(read_buf, 9);
 
 	printf("test i2c done\r\n");
 

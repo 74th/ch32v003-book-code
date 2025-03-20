@@ -29,7 +29,7 @@ uint16_t read_uart_with_timeout(uint8_t *buf, uint16_t len)
     return len;
 }
 
-void send_uart(uint8_t *buf, uint16_t len)
+void write_uart(uint8_t *buf, uint16_t len)
 {
     for (uint16_t i = 0; i < len; i++)
     {
@@ -48,7 +48,7 @@ int loop(uint32_t loop_count)
     uint8_t read_buf[9] = {0};
     printf("loop %d\r\n", loop_count++);
 
-    send_uart(CMD_READ_CO2_CONNECTION, sizeof(CMD_TURN_ON_SELF_CALIBRATION));
+    write_uart(CMD_READ_CO2_CONNECTION, sizeof(CMD_TURN_ON_SELF_CALIBRATION));
 
     uint16_t read_len = 0;
 
@@ -161,7 +161,7 @@ int main(void)
     printf("send turn on self calibration\r\n");
 
     // セルフキャリブレーションの有効化
-    send_uart(CMD_TURN_ON_SELF_CALIBRATION, sizeof(CMD_TURN_ON_SELF_CALIBRATION));
+    write_uart(CMD_TURN_ON_SELF_CALIBRATION, sizeof(CMD_TURN_ON_SELF_CALIBRATION));
 
     Delay_Ms(1);
 
