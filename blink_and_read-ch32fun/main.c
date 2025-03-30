@@ -1,4 +1,4 @@
-#define USE_BRANCHLESS 0
+#define USE_BRANCHLESS 1
 
 #include "ch32fun.h"
 #include <stdio.h>
@@ -57,9 +57,9 @@ int main()
 			continue;
 		}
 
-		GPIO_digitalWrite(LED_PIN, high);
+		GPIO_digitalWrite_high(LED_PIN);
 		Delay_Ms(500);
-		GPIO_digitalWrite(LED_PIN, low);
+		GPIO_digitalWrite_low(LED_PIN);
 		Delay_Ms(500);
 	}
 #else
