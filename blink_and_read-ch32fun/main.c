@@ -1,4 +1,4 @@
-#define USE_BRANCHLESS 1
+#define USE_BRANCHLESS 0
 
 #include "ch32fun.h"
 #include <stdio.h>
@@ -64,16 +64,15 @@ int main()
 	}
 #else
 	// GPIO有効化
-	funGpioInitA();
-	funGpioInitC();
+	funGpioInitAll();
 
 	// PC0 出力
 	funPinMode(LED_PIN, GPIO_Speed_10MHz | GPIO_CNF_OUT_PP);
 
 	// PA1 入力
 	funPinMode(BUTTON_PIN, GPIO_CNF_IN_PUPD);
-	// プルアップの設定をレジスタで行う
-	GPIOA->OUTDR = 0x1 << 1;
+	// プルアップの設定は、funDigitalWrite() で行う
+	funDigitalWrite(BUTTON_PIN, FUN_HIGH);
 	printf("GPIOA->CFGLR: %08X\r\n", GPIOA->CFGLR);
 	printf("GPIOA->OUTDR: %08X\r\n", GPIOA->OUTDR);
 	printf("GPIOA->BSHR: %08X\r\n", GPIOA->BSHR);
