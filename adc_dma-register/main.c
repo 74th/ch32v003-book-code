@@ -1,8 +1,6 @@
 #include "ch32fun.h"
 #include <stdio.h>
 
-#include "ch32v003_GPIO_branchless.h"
-
 #define ADC_NUM_CHANNEL 2
 
 // ピンの定義
@@ -32,11 +30,21 @@ int main()
 	// ADC初期化
 	ADC1->RSQR1 = (ADC_NUM_CHANNEL - 1) << 20;
 	ADC1->RSQR2 = 0;
-	ADC1->RSQR3 = (1 << (5 * 0)) | (0 << (5 * 1));
-	ADC1->SAMPTR2 = (7 << (3 * 0)) | (7 << (3 * 1));
+	// 1番目にチャンネル1、2番目にチャンネル0を指定
+	ADC1->RSQR3 = (ADC_Channel_1 << (5 * 0)) | (ADC_Channel_0 << (5 * 1));
+	// 1番目、2番目のサンプルレートを設定
+	ADC1->SAMPTR2 = (ADC_SampleTime_241Cycles << (3 * 0)) | (ADC_SampleTime_241Cycles << (3 * 1));
+	// 連続スキャンモード
 	ADC1->CTLR1 |= ADC_SCAN;
+	ADC1->CTLR2 |=
+		// 連続変換
+		ADC_CONT |
+		// ソフトウェアトリガを有効化
+		ADC_EXTSEL |
+		// DMAのトリガを有効化
+		ADC_DMA;
 
-	// ADC ON
+	// ADCの有効化
 	ADC1->CTLR2 |= ADC_ADON;
 
 	// ADCキャリブレーション
@@ -48,25 +56,29 @@ int main()
 		;
 
 	// DMA1_Channel1
+	// ADC1の変換結果 → メモリ
 	DMA1_Channel1->PADDR = (uint32_t)&ADC1->RDATAR;
 	DMA1_Channel1->MADDR = (uint32_t)adc_buf;
+	// チャンネルの数だけインクリメントする
 	DMA1_Channel1->CNTR = ADC_NUM_CHANNEL;
 	DMA1_Channel1->CFGR =
+		// Peripheralからメモリへの転送
+		DMA_DIR_PeripheralSRC |
 		DMA_M2M_Disable |
+		// 優先度高
 		DMA_Priority_VeryHigh |
+		// メモリのデータサイズは16bit
 		DMA_MemoryDataSize_HalfWord |
+		// Peripheralのデータサイズは16bit
 		DMA_PeripheralDataSize_HalfWord |
+		// メモリのみインクリメント
 		DMA_MemoryInc_Enable |
-		DMA_Mode_Circular |
-		DMA_DIR_PeripheralSRC;
+		// 繰り返す
+		DMA_Mode_Circular;
 
 	// DMA1_Channel1有効化
 	DMA1_Channel1->CFGR |= DMA_CFGR1_EN;
-
-	// ADC1を有効にし、連続変換とDMAを有効化
-	ADC1->CTLR2 |= ADC_CONT | ADC_DMA | ADC_EXTSEL;
-
-	// ADC1開始
+	// 最初の変換をトリガ
 	ADC1->CTLR2 |= ADC_SWSTART;
 
 	printf("start\r\n");
