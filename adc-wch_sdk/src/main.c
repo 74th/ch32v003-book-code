@@ -29,8 +29,7 @@ int main(void)
     ADC_InitTypeDef ADC_InitStructure = {0};
 
     // GPIOにクロック供給
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOA, ENABLE);
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOA, ENABLE);
 
     // VRX PA1 - ADC1 CH1
     GPIO_InitStructure.GPIO_Pin = VRX_PIN;
@@ -43,17 +42,23 @@ int main(void)
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 
     ADC_DeInit(ADC1);
+    // 単一のADCの変換を動かす（各チャンネルの連続変換はしない）
     ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
     ADC_InitStructure.ADC_ScanConvMode = DISABLE;
+    // 連続変換は無効
     ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
+    // 外部トリガは無効
     ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
+    // 16bitのレジスタに10bitの変換結果を格納する
+    // その時のアライメント
     ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
+    // 変換の数
     ADC_InitStructure.ADC_NbrOfChannel = 1;
+    // 設定の反映
     ADC_Init(ADC1, &ADC_InitStructure);
 
     ADC_Calibration_Vol(ADC1, ADC_CALVOL_50PERCENT);
     ADC_Cmd(ADC1, ENABLE);
-    ;
 
     // キャリブレーション
     ADC_ResetCalibration(ADC1);
@@ -77,7 +82,7 @@ int main(void)
         while (!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC))
             ;
 
-        uint32_t x = ADC_GetConversionValue(ADC1);
+        uint16_t x = ADC_GetConversionValue(ADC1);
 
         // CH2 を読み取り
         ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 1, ADC_SampleTime_241Cycles);
@@ -85,7 +90,7 @@ int main(void)
         while (!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC))
             ;
 
-        uint32_t y = ADC_GetConversionValue(ADC1);
+        uint16_t y = ADC_GetConversionValue(ADC1);
 
         printf("x: %d, y: %d\r\n", x, y);
 

@@ -36,7 +36,7 @@ void TIM1_INT_Init(uint16_t arr, uint16_t psc)
 	// PreemptionPriority = 0, SubPriority = 1
 	NVIC->IPRIOR[TIM1_UP_IRQn] = 0 << 7 | 1 << 6;
 	// 有効化
-	NVIC->IENR[((uint32_t)(TIM1_UP_IRQn) >> 5)] = (1 << ((uint32_t)(TIM1_UP_IRQn) & 0x1F));
+	NVIC->IENR[((uint32_t)(TIM1_UP_IRQn) >> 5)] != (1 << ((uint32_t)(TIM1_UP_IRQn) & 0x1F));
 	printf("NVIC->IPRIOR[TIM1_UP_IRQn]: %x\r\n", NVIC->IPRIOR[(uint32_t)(TIM1_UP_IRQn)]);
 	printf("NVIC->IENR[TIM1_UP_IRQn]:%x\r\n", NVIC->IENR[(uint32_t)(TIM1_UP_IRQn)]);
 	// NVIC->IPRIOR[TIM1_UP_IRQn]: 40
@@ -58,8 +58,9 @@ void TIM1_UP_IRQHandler(void)
 		printf("1sec event\r\n");
 	}
 
-	// フラグを降ろす
-	TIM1->INTFR = (uint16_t)~TIM_IT_Update;
+	// フラグのクリア
+	TIM1->INTFR &= (uint16_t)~TIM_IT_Update;
+	TIM1->DMAINTENR &= (uint16_t)~TIM_IT_Update;
 
 	if (ledState)
 	{
