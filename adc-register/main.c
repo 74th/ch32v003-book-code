@@ -1,8 +1,6 @@
 #include "ch32fun.h"
 #include <stdio.h>
 
-#include "ch32v003_GPIO_branchless.h"
-
 // ピンの定義
 #define VRX_PIN GPIOv_from_PORT_PIN(GPIO_port_A, 1)
 #define VRY_PIN GPIOv_from_PORT_PIN(GPIO_port_A, 2)
@@ -52,25 +50,27 @@ int main()
 	{
 		printf("loop %d\r\n", count++);
 
-		// CH1を選択
-		ADC1->RSQR3 = ADC_Channel_1;
+		// 1番目の変換に、CH1を選択
+		ADC1->RSQR3 = ADC_Channel_1 << (5 * 0);
+		// 1番目の変換の、サンプルレート
+		ADC1->SAMPTR2 = ADC_SampleTime_241Cycles << (3 * 1);
+
 		Delay_Us(GPIO_ADC_MUX_DELAY);
-		// 読み取りをトリガ
+		// 変換をトリガ
 		ADC1->CTLR2 |= ADC_SWSTART;
 		while (!(ADC1->STATR & ADC_EOC))
-		{
-		}
+			;
 		uint16_t x = ADC1->RDATAR;
 
-		// CH0を選択
+		// 1番目の変換に、CH0を選択
 		ADC1->RSQR3 = ADC_Channel_0;
+
 		Delay_Us(GPIO_ADC_MUX_DELAY);
-		// 読み取りをトリガ
+		// 変換をトリガ
 		ADC1->CTLR2 |= ADC_SWSTART;
 		while (!(ADC1->STATR & ADC_EOC))
-		{
-		}
-		uint16_t y = GPIO_analogRead(GPIO_Ain0_A2);
+			;
+		uint16_t y = ADC1->RDATAR;
 
 		printf("x: %d, y: %d\r\n", x, y);
 
