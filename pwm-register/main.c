@@ -33,15 +33,9 @@ void t1pwm_init(void)
 
 #if USE_REMAP
 	// REMAPの有効化
+	AFIO->PCFR1 &= ~AFIO_PCFR1_TIM1_REMAP;
 	AFIO->PCFR1 |= AFIO_PCFR1_TIM1_REMAP_PARTIALREMAP1;
 #endif
-	// リセット
-	RCC->APB2PRSTR |= RCC_APB2Periph_TIM1;
-	RCC->APB2PRSTR &= ~RCC_APB2Periph_TIM1;
-
-	// CTLR1: default is up, events generated, edge align
-	// SMCFGR: default clk input is CK_INT
-
 	// Timerの設定
 	// Timer1を256周期で有効化
 	TIM1->PSC = 1;
