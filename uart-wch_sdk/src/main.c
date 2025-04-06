@@ -19,7 +19,6 @@ uint16_t read_uart_with_timeout(uint8_t *buf, uint16_t len)
         // 受信完了まで待つ
         while (timeout-- && USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET)
             ;
-        ;
 
         if (timeout < 0)
         {
@@ -38,16 +37,16 @@ void write_uart(uint8_t *buf, uint16_t len)
     for (uint16_t i = 0; i < len; i++)
     {
         // 準備完了まで待つ
-        while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET)
+        while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
             ;
 
         // 送信データをセット
         USART_SendData(USART1, buf[i]);
-
-        // 送信完了まで待つ
-        while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-            ;
     }
+
+    // 送信完了まで待つ
+    while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET)
+        ;
 }
 
 int loop(uint32_t loop_count)
@@ -172,11 +171,17 @@ int main(void)
     GPIO_Init(GPIOD, &GPIO_InitStructure);
 #endif
 
+    // ボーレート
     USART_InitStructure.USART_BaudRate = 9600;
+    // 8ビットデータ
     USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+    // ストップビットは1ビット
     USART_InitStructure.USART_StopBits = USART_StopBits_1;
+    // パリティなし
     USART_InitStructure.USART_Parity = USART_Parity_No;
+    // フロー制御は無し
     USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+    // 送信(Tx)と受信(Rx)の両方を有効化
     USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
 
     USART_Init(USART1, &USART_InitStructure);

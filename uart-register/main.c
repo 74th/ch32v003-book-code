@@ -63,7 +63,7 @@ uint16_t read_uart_with_timeout(uint8_t *buf, uint16_t len)
 	for (uint16_t i = 0; i < len; i++)
 	{
 		int32_t timeout = TIMEOUT_MAX;
-		// 受信完了まで待つ
+		// 受信データが来るまで待つ
 		while (timeout-- && !(USART1->STATR & USART_FLAG_RXNE))
 			;
 
@@ -84,17 +84,17 @@ void write_uart(uint8_t *buf, uint16_t len)
 {
 	for (uint16_t i = 0; i < len; i++)
 	{
-		// 準備完了まで待つ
-		while (!(USART1->STATR & USART_FLAG_TC))
-			;
-
-		// 送信データをセット
-		USART1->DATAR = buf[i];
-
-		// 送信完了まで待つ
+		// バッファが空いて次のデータが入れられるまでまつ
 		while (!(USART1->STATR & USART_FLAG_TXE))
 			;
+
+		// 送信データをバッファにセット
+		USART1->DATAR = buf[i];
 	}
+
+	// 送信完了まで待つ
+	while (!(USART1->STATR & USART_FLAG_TC))
+		;
 }
 
 int loop(uint32_t loop_count)
