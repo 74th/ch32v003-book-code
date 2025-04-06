@@ -1,6 +1,8 @@
 #include <ch32v00x.h>
 #include <debug.h>
 
+#define USE_REMAP 1
+
 #define TIMEOUT_MAX 100000
 
 void NMI_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
@@ -14,6 +16,7 @@ uint16_t read_uart_with_timeout(uint8_t *buf, uint16_t len)
     for (uint16_t i = 0; i < len; i++)
     {
         int32_t timeout = TIMEOUT_MAX;
+        // 受信完了まで待つ
         while (timeout-- && USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET)
             ;
         ;
@@ -23,6 +26,7 @@ uint16_t read_uart_with_timeout(uint8_t *buf, uint16_t len)
             return i;
         }
 
+        // 受信データを読み込む
         buf[i] = USART_ReceiveData(USART1);
     }
 
@@ -33,11 +37,14 @@ void write_uart(uint8_t *buf, uint16_t len)
 {
     for (uint16_t i = 0; i < len; i++)
     {
+        // 準備完了まで待つ
         while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET)
             ;
 
+        // 送信データをセット
         USART_SendData(USART1, buf[i]);
 
+        // 送信完了まで待つ
         while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
             ;
     }
@@ -133,8 +140,26 @@ int main(void)
     GPIO_InitTypeDef GPIO_InitStructure = {0};
     USART_InitTypeDef USART_InitStructure = {0};
 
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD | RCC_APB2Periph_USART1 | RCC_APB2Periph_AFIO, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD | RCC_APB2Periph_USART1, ENABLE);
+#if USE_REMAP
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+#endif
 
+#if USE_REMAP
+    // Remap 3
+    GPIO_PinRemapConfig(GPIO_FullRemap_USART1, ENABLE);
+
+    // PC0: TX
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+    GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+    // PC1: RX
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+    GPIO_Init(GPIOC, &GPIO_InitStructure);
+#else
     // PD5: TX
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
@@ -145,6 +170,7 @@ int main(void)
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
     GPIO_Init(GPIOD, &GPIO_InitStructure);
+#endif
 
     USART_InitStructure.USART_BaudRate = 9600;
     USART_InitStructure.USART_WordLength = USART_WordLength_8b;

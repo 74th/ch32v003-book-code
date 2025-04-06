@@ -1,6 +1,8 @@
 #include "ch32fun.h"
 #include <stdio.h>
 
+#define USE_REMAP 1
+
 #define TIMEOUT_MAX 100000
 
 uint8_t CMD_READ_CO2_CONNECTION[9] = {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79};
@@ -8,23 +10,51 @@ uint8_t CMD_TURN_ON_SELF_CALIBRATION[9] = {0xFF, 0x01, 0x79, 0xA0, 0x00, 0x00, 0
 
 void init_rcc(void)
 {
-	RCC->APB2PCENR |= RCC_APB2Periph_GPIOD | RCC_APB2Periph_USART1;
+	RCC->APB2PCENR |= RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD | RCC_APB2Periph_USART1;
+#if USE_REMAP
+	RCC->APB2PCENR |= RCC_APB2Periph_AFIO;
+#endif
 }
 
 void setup_uart()
 {
-	// Push-Pull, 10MHz Output, GPIO D5, with AutoFunction
+#if USE_REMAP
+	// REMAPの有効化
+	AFIO->PCFR1 &= ~(AFIO_PCFR1_USART1_REMAP | AFIO_PCFR1_USART1_HIGH_BIT_REMAP);
+	AFIO->PCFR1 |= AFIO_PCFR1_USART1_REMAP | AFIO_PCFR1_USART1_HIGH_BIT_REMAP;
+
+	// PC0: TX
+	GPIOC->CFGLR &= ~(0xf << (4 * 0));
+	GPIOC->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 0);
+	// PC1: RX
+	GPIOC->CFGLR &= ~(0xf << (4 * 1));
+	GPIOC->CFGLR |= (GPIO_Speed_In | GPIO_CNF_IN_FLOATING) << (4 * 1);
+#else
+	// PD5: TX
 	GPIOD->CFGLR &= ~(0xf << (4 * 5));
 	GPIOD->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP_AF) << (4 * 5);
+	// PD6: RX
 	GPIOD->CFGLR &= ~(0xf << (4 * 6));
 	GPIOD->CFGLR |= (GPIO_Speed_In | GPIO_CNF_IN_FLOATING) << (4 * 6);
+#endif
 
 	// 115200, 8n1.  Note if you don't specify a mode, UART remains off even when UE_Set.
-	USART1->CTLR1 = USART_WordLength_8b | USART_Parity_No | USART_Mode_Tx | USART_Mode_Rx;
+	USART1->CTLR1 =
+		// バイト長 8bit
+		USART_WordLength_8b |
+		// パリティなし
+		USART_Parity_No |
+		// TX有効化
+		USART_Mode_Tx |
+		// RX有効化
+		USART_Mode_Rx;
+	// ストップビット 1
 	USART1->CTLR2 = USART_StopBits_1;
+	// フロー制御なし
 	USART1->CTLR3 = USART_HardwareFlowControl_None;
-
+	// ボーレート 9600
 	USART1->BRR = (((FUNCONF_SYSTEM_CORE_CLOCK) + (9600) / 2) / (9600));
+	// 有効化
 	USART1->CTLR1 |= CTLR1_UE_Set;
 }
 
@@ -33,14 +63,17 @@ uint16_t read_uart_with_timeout(uint8_t *buf, uint16_t len)
 	for (uint16_t i = 0; i < len; i++)
 	{
 		int32_t timeout = TIMEOUT_MAX;
+		// 受信完了まで待つ
 		while (timeout-- && !(USART1->STATR & USART_FLAG_RXNE))
 			;
 
 		if (timeout < 0)
 		{
+
 			return i;
 		}
 
+		// 受信データを読み込む
 		buf[i] = USART1->DATAR;
 	}
 
@@ -51,11 +84,14 @@ void write_uart(uint8_t *buf, uint16_t len)
 {
 	for (uint16_t i = 0; i < len; i++)
 	{
+		// 準備完了まで待つ
 		while (!(USART1->STATR & USART_FLAG_TC))
 			;
 
+		// 送信データをセット
 		USART1->DATAR = buf[i];
 
+		// 送信完了まで待つ
 		while (!(USART1->STATR & USART_FLAG_TXE))
 			;
 	}
@@ -66,16 +102,7 @@ int loop(uint32_t loop_count)
 	uint8_t read_buf[9] = {0};
 	printf("loop %d\r\n", loop_count++);
 
-	for (int i = 0; i < sizeof(CMD_READ_CO2_CONNECTION); i++)
-	{
-		while (!(USART1->STATR & USART_FLAG_TC))
-			;
-
-		USART1->DATAR = CMD_READ_CO2_CONNECTION[i];
-
-		while (!(USART1->STATR & USART_FLAG_TXE))
-			;
-	}
+	write_uart(CMD_READ_CO2_CONNECTION, sizeof(CMD_READ_CO2_CONNECTION));
 
 	uint16_t read_len = 0;
 
