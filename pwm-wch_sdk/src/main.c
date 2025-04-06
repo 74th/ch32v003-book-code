@@ -72,10 +72,14 @@ void TIM1_PWMOut_Init()
     TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
     TIM_OC4Init(TIM1, &TIM_OCInitStructure);
 
-    TIM_CtrlPWMOutputs(TIM1, ENABLE);
+    // カウンタの値を即時反映するため、プリロード機能をDisableにする
     TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Disable);
     TIM_OC4PreloadConfig(TIM1, TIM_OCPreload_Disable);
     TIM_ARRPreloadConfig(TIM1, ENABLE);
+
+    // PWM出力の有効化
+    TIM_CtrlPWMOutputs(TIM1, ENABLE);
+    // Timerの有効化
     TIM_Cmd(TIM1, ENABLE);
 }
 
