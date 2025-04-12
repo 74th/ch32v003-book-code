@@ -119,18 +119,22 @@ int main(void)
   // 設定の適用
   NVIC_Init(&NVIC_InitStructure);
 
-  // I2C1 Init
+  // I2Cの設定
   I2C_InitTSturcture.I2C_ClockSpeed = 2000000;
   I2C_InitTSturcture.I2C_Mode = I2C_Mode_I2C;
   I2C_InitTSturcture.I2C_DutyCycle = I2C_DutyCycle_2;
+  // I2Cスレーブアドレスを指定
   I2C_InitTSturcture.I2C_OwnAddress1 = I2C_ADDRESS << 1;
   I2C_InitTSturcture.I2C_Ack = I2C_Ack_Enable;
   I2C_InitTSturcture.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
   I2C_Init(I2C1, &I2C_InitTSturcture);
 
+  // I2Cの有効化
   I2C_Cmd(I2C1, ENABLE);
+  // I2C ACKの有効化
   I2C_AcknowledgeConfig(I2C1, ENABLE);
 
+  // I2Cの割込の有効化
   I2C_ITConfig(I2C1, I2C_IT_EVT, ENABLE);
   I2C_ITConfig(I2C1, I2C_IT_ERR, ENABLE);
   I2C_ITConfig(I2C1, I2C_IT_BUF, ENABLE);
