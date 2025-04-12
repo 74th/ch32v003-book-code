@@ -5,7 +5,7 @@
 
 #define SHT31_I2C_ADDR 0x44
 
-#define USE_REMAP 0
+#define USE_REMAP 1
 
 void NMI_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void HardFault_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
@@ -24,6 +24,7 @@ int8_t send_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
 
   if (timeout < 0)
   {
+    printf("i2c error: i2c bus busy\r\n");
     return -1;
   }
 
@@ -36,6 +37,7 @@ int8_t send_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
     ;
   if (timeout < 0)
   {
+    printf("i2c error: i2c start error\r\n");
     return -1;
   }
 
@@ -48,6 +50,7 @@ int8_t send_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
     ;
   if (timeout < 0)
   {
+    printf("i2c error: i2c address error\r\n");
     return -1;
   }
 
@@ -58,6 +61,7 @@ int8_t send_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
       ;
     if (timeout < 0)
     {
+      printf("i2c error: i2c tx empty error\r\n");
       return -1;
     }
 
@@ -71,6 +75,7 @@ int8_t send_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
     ;
   if (timeout < 0)
   {
+    printf("i2c error: i2c tx complete error\r\n");
     return -1;
   }
 
@@ -91,6 +96,7 @@ int8_t read_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
     ;
   if (timeout < 0)
   {
+    printf("i2c error: i2c bus busy\r\n");
     return -1;
   }
 
@@ -103,6 +109,7 @@ int8_t read_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
     ;
   if (timeout < 0)
   {
+    printf("i2c error: i2c start error\r\n");
     return -1;
   }
 
@@ -115,6 +122,7 @@ int8_t read_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
     ;
   if (timeout < 0)
   {
+    printf("i2c error: i2c address error\r\n");
     return -1;
   }
 
@@ -124,9 +132,9 @@ int8_t read_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
     timeout = TIMEOUT_MAX;
     while (timeout-- && !I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_RECEIVED))
       ;
-
     if (timeout < 0)
     {
+      printf("i2c error: i2c rx complete error\r\n");
       return -1;
     }
 
@@ -185,7 +193,7 @@ int main(void)
 
   // I2C1の設定
   // クロック速度
-  I2C_InitTSturcture.I2C_ClockSpeed = 100000;
+  I2C_InitTSturcture.I2C_ClockSpeed = 400000;
   // モード（固定値）
   I2C_InitTSturcture.I2C_Mode = I2C_Mode_I2C;
   // デューティサイクル

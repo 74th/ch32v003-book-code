@@ -183,62 +183,63 @@ uint8_t send_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
   return 0;
 }
 
-int i2c_receive(uint8_t address, uint8_t *buf, uint8_t length)
+int read_i2c_data(uint8_t address, uint8_t *buf, uint8_t length)
 {
   int32_t timeout;
 
   I2C1->CTLR1 |= I2C_CTLR1_ACK;
 
-  // wait for not busy
+  // I2Cのバスがビジーでなくなるまで待つ
   timeout = TIMEOUT_MAX;
-  while ((I2C1->STAR2 & I2C_STAR2_BUSY) && (timeout--))
+  while (timeout-- && (I2C1->STAR2 & I2C_STAR2_BUSY))
     ;
-  if (timeout == -1)
+  if (timeout < 0)
   {
-    printf("i2c error: waiting for not BUSY is timeout\r\n");
+    printf("i2c error: waiting for not BUSY is timeout 2\r\n");
     I2C1->CTLR1 |= I2C_CTLR1_STOP;
     return -1;
   }
 
-  // Set START condition
+  // 通信の開始の送信
   I2C1->CTLR1 |= I2C_CTLR1_START;
 
-  // wait for master mode select
+  // マスターモードに準備できるまで待つ
   timeout = TIMEOUT_MAX;
-  while ((!check_i2c_event(I2C_EVENT_MASTER_MODE_SELECT)) && (timeout--))
+  while (timeout-- && (!check_i2c_event(I2C_EVENT_MASTER_MODE_SELECT)))
     ;
-  if (timeout == -1)
+  if (timeout < 0)
   {
     printf("i2c error: waiting for master select is timeout\r\n");
     I2C1->CTLR1 |= I2C_CTLR1_STOP;
     return -1;
   }
 
-  // send 7-bit address + receive flag
+  // スレーブアドレスをスレーブからマスターへの通信として送信
   I2C1->DATAR = address << 1 | 0x1;
 
-  // wait for transmit condition
+  // レシーバーモードに準備できるまで待つ
   timeout = TIMEOUT_MAX;
-  while ((!check_i2c_event(I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)) && (timeout--))
+  while (timeout-- && (!check_i2c_event(I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)))
     ;
-  if (timeout == -1)
+  if (timeout < 0)
   {
     printf("i2c error: waiting for transmit condition is timeout %04x, %04x\r\n", I2C1->STAR1, I2C1->STAR2);
     I2C1->CTLR1 |= I2C_CTLR1_STOP;
     return -1;
   }
 
-  // send data one byte at a time
-  while (length--)
+  for (int i = 0; i < length; i++)
   {
-    if (length == 0)
+    // 最後のバイトの受信の前にACKを降ろす
+    if (length - 1 == i)
     {
       printf("i2c receive last byte\r\n");
       I2C1->CTLR1 &= ~I2C_CTLR1_ACK;
     }
-    // wait for TX Empty
+
+    // 受信完了イベントを待つ
     timeout = TIMEOUT_MAX;
-    while (!(I2C1->STAR1 & I2C_STAR1_RXNE) && (timeout--))
+    while (timeout-- && (!check_i2c_event(I2C_EVENT_MASTER_BYTE_RECEIVED)))
       ;
     if (timeout == -1)
     {
@@ -247,66 +248,15 @@ int i2c_receive(uint8_t address, uint8_t *buf, uint8_t length)
       return -1;
     }
 
-    // receive command
-    *buf = I2C1->DATAR;
-    printf("i2c receive: [%2d] 0x%02x\r\n", length, *buf);
-    buf++;
+    // 受信データの受信
+    buf[i] = I2C1->DATAR;
+    printf("i2c receive: [%2d] 0x%02x\r\n", i, buf[i]);
   }
 
-  // set STOP condition
+  // 通信の終了の送信
   I2C1->CTLR1 |= I2C_CTLR1_STOP;
 
   return 0;
-}
-
-int i2c_slave_available(uint8_t addr)
-{
-  int32_t timeout;
-
-  I2C1->CTLR1 |= I2C_CTLR1_ACK;
-
-  // wait for not busy
-  timeout = TIMEOUT_MAX;
-  while ((I2C1->STAR2 & I2C_STAR2_BUSY) && (timeout--))
-    ;
-  if (timeout == -1)
-  {
-    printf("i2c error: waiting for not BUSY is timeout\r\n");
-    I2C1->CTLR1 |= I2C_CTLR1_STOP;
-    return 0;
-  }
-
-  // Set START condition
-  I2C1->CTLR1 |= I2C_CTLR1_START;
-
-  // wait for master mode select
-  timeout = TIMEOUT_MAX;
-  while ((!check_i2c_event(I2C_EVENT_MASTER_MODE_SELECT)) && (timeout--))
-    ;
-  if (timeout == -1)
-  {
-    printf("i2c error: waiting for master select is timeout\r\n");
-    I2C1->CTLR1 |= I2C_CTLR1_STOP;
-    return 0;
-  }
-
-  // send 7-bit address + receive flag
-  I2C1->DATAR = addr << 1 | 0x1;
-
-  // wait for transmit condition
-  timeout = TIMEOUT_MAX;
-  while ((!check_i2c_event(I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)) && (timeout--))
-    ;
-  if (timeout == -1)
-  {
-    printf("i2c error: waiting for transmit condition is timeout %04x, %04x\r\n", I2C1->STAR1, I2C1->STAR2);
-    I2C1->CTLR1 |= I2C_CTLR1_STOP;
-    return 0;
-  }
-
-  I2C1->CTLR1 |= I2C_CTLR1_STOP;
-
-  return 1;
 }
 
 int main()
@@ -344,7 +294,7 @@ int main()
 
     Delay_Ms(300);
 
-    i2c_receive(I2C_SLAVE_ADDRESS, dac, sizeof(dac));
+    read_i2c_data(I2C_SLAVE_ADDRESS, dac, sizeof(dac));
 
     t = (dac[0] << 8) | dac[1];                       // 1Byte目のデータを8bit左にシフト、OR演算子で2Byte目のデータを結合して、tに代入
     temperature = (((uint32_t)(t) * 175) >> 16) - 45; // 温度の計算、temperatureに代入
