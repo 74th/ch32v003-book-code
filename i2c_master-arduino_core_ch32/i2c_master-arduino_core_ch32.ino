@@ -62,7 +62,7 @@ void loop()
   t = (dac[0] << 8) | dac[1];                       // 1Byte目のデータを8bit左にシフト、OR演算子で2Byte目のデータを結合して、tに代入
   temperature = (((uint32_t)(t) * 175) >> 16) - 45; // 温度の計算、temperatureに代入
   h = (dac[3] << 8) | dac[4];                       // 4Byte目のデータを8bit左にシフト、OR演算子で5Byte目のデータを結合して、hに代入
-  humidity = (((uint32_t)(h)*100) >> 16);           // 湿度の計算、humidityに代入
+  humidity = (((uint32_t)(h) * 100) >> 16);         // 湿度の計算、humidityに代入
 
   Serial.print("temperature: ");
   Serial.print(temperature);

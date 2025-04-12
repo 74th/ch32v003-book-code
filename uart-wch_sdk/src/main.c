@@ -13,212 +13,212 @@ uint8_t CMD_TURN_ON_SELF_CALIBRATION[9] = {0xFF, 0x01, 0x79, 0xA0, 0x00, 0x00, 0
 
 uint16_t read_uart_with_timeout(uint8_t *buf, uint16_t len)
 {
-    for (uint16_t i = 0; i < len; i++)
+  for (uint16_t i = 0; i < len; i++)
+  {
+    int32_t timeout = TIMEOUT_MAX;
+    // 受信完了まで待つ
+    while (timeout-- && USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET)
+      ;
+
+    if (timeout < 0)
     {
-        int32_t timeout = TIMEOUT_MAX;
-        // 受信完了まで待つ
-        while (timeout-- && USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET)
-            ;
-
-        if (timeout < 0)
-        {
-            return i;
-        }
-
-        // 受信データを読み込む
-        buf[i] = USART_ReceiveData(USART1);
+      return i;
     }
 
-    return len;
+    // 受信データを読み込む
+    buf[i] = USART_ReceiveData(USART1);
+  }
+
+  return len;
 }
 
 void write_uart(uint8_t *buf, uint16_t len)
 {
-    for (uint16_t i = 0; i < len; i++)
-    {
-        // 準備完了まで待つ
-        while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-            ;
+  for (uint16_t i = 0; i < len; i++)
+  {
+    // 準備完了まで待つ
+    while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
+      ;
 
-        // 送信データをセット
-        USART_SendData(USART1, buf[i]);
-    }
+    // 送信データをセット
+    USART_SendData(USART1, buf[i]);
+  }
 
-    // 送信完了まで待つ
-    while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET)
-        ;
+  // 送信完了まで待つ
+  while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET)
+    ;
 }
 
 int loop(uint32_t loop_count)
 {
-    uint8_t read_buf[9] = {0};
-    printf("loop %d\r\n", loop_count++);
+  uint8_t read_buf[9] = {0};
+  printf("loop %d\r\n", loop_count++);
 
-    write_uart(CMD_READ_CO2_CONNECTION, sizeof(CMD_TURN_ON_SELF_CALIBRATION));
+  write_uart(CMD_READ_CO2_CONNECTION, sizeof(CMD_TURN_ON_SELF_CALIBRATION));
 
-    uint16_t read_len = 0;
+  uint16_t read_len = 0;
 
-    // 0xff 0x86 が読めるまで読み進める
-    while (1)
+  // 0xff 0x86 が読めるまで読み進める
+  while (1)
+  {
+    read_len = read_uart_with_timeout(&read_buf[0], 1);
+    if (read_len == 0)
     {
-        read_len = read_uart_with_timeout(&read_buf[0], 1);
-        if (read_len == 0)
-        {
-            printf("read timeout\r\n");
-            Delay_Ms(1000);
+      printf("read timeout\r\n");
+      Delay_Ms(1000);
 
-            return 1;
-        }
-        if (read_buf[0] != 0xff)
-        {
-            // printf("invalid start byte: %0x\r\n", read_buf[0]);
-            continue;
-        }
-
-        read_len = read_uart_with_timeout(&read_buf[1], 1);
-        if (read_len == 0)
-        {
-            printf("read timeout\r\n");
-            Delay_Ms(1000);
-            return 1;
-        }
-        if (read_buf[1] != 0x86)
-        {
-            // printf("invalid command byte: %02x\r\n", read_buf[1]);
-            continue;
-        }
-
-        break;
+      return 1;
+    }
+    if (read_buf[0] != 0xff)
+    {
+      // printf("invalid start byte: %0x\r\n", read_buf[0]);
+      continue;
     }
 
-    read_len = read_uart_with_timeout(&read_buf[2], 7);
-    if (read_len < 7)
+    read_len = read_uart_with_timeout(&read_buf[1], 1);
+    if (read_len == 0)
     {
-        printf("timeout\r\n");
-        Delay_Ms(1000);
+      printf("read timeout\r\n");
+      Delay_Ms(1000);
+      return 1;
+    }
+    if (read_buf[1] != 0x86)
+    {
+      // printf("invalid command byte: %02x\r\n", read_buf[1]);
+      continue;
     }
 
-    // for (int i = 0; i < sizeof(read_buf); i++)
-    // {
-    //     printf("0x%02X ", read_buf[i]);
-    // }
-    // printf("\r\n");
+    break;
+  }
 
-    // チェックサム
-    uint8_t c = 0;
-    for (int i = 1; i < 8; i++)
-    {
-        c += read_buf[i];
-    }
-    if (0xff - c + 1 != read_buf[8])
-    {
-        printf("invalid checksum\r\n");
-    }
+  read_len = read_uart_with_timeout(&read_buf[2], 7);
+  if (read_len < 7)
+  {
+    printf("timeout\r\n");
+    Delay_Ms(1000);
+  }
 
-    uint16_t co2 = read_buf[2] * 256 + read_buf[3];
-    printf("CO2: %5d ppm\r\n", co2);
+  // for (int i = 0; i < sizeof(read_buf); i++)
+  // {
+  //     printf("0x%02X ", read_buf[i]);
+  // }
+  // printf("\r\n");
 
-    return 0;
+  // チェックサム
+  uint8_t c = 0;
+  for (int i = 1; i < 8; i++)
+  {
+    c += read_buf[i];
+  }
+  if (0xff - c + 1 != read_buf[8])
+  {
+    printf("invalid checksum\r\n");
+  }
+
+  uint16_t co2 = read_buf[2] * 256 + read_buf[3];
+  printf("CO2: %5d ppm\r\n", co2);
+
+  return 0;
 }
 
 int main(void)
 {
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
-    SystemCoreClockUpdate();
-    Delay_Init();
+  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
+  SystemCoreClockUpdate();
+  Delay_Init();
 
-    // SDI printf の有効化
-    // ビルドフラグ SDI_PRINT=1 が必要
-    // wlink sdi-print enable を実行し、USBシリアルをリスンする
-    SDI_Printf_Enable();
+  // SDI printf の有効化
+  // ビルドフラグ SDI_PRINT=1 が必要
+  // wlink sdi-print enable を実行し、USBシリアルをリスンする
+  SDI_Printf_Enable();
 
-    Delay_Ms(100);
+  Delay_Ms(100);
 
-    printf("init\r\n");
+  printf("init\r\n");
 
-    GPIO_InitTypeDef GPIO_InitStructure = {0};
-    USART_InitTypeDef USART_InitStructure = {0};
+  GPIO_InitTypeDef GPIO_InitStructure = {0};
+  USART_InitTypeDef USART_InitStructure = {0};
 
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD | RCC_APB2Periph_USART1, ENABLE);
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD | RCC_APB2Periph_USART1, ENABLE);
 #if USE_REMAP
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 #endif
 
 #if USE_REMAP
-    // Remap 3
-    GPIO_PinRemapConfig(GPIO_FullRemap_USART1, ENABLE);
+  // Remap 3
+  GPIO_PinRemapConfig(GPIO_FullRemap_USART1, ENABLE);
 
-    // PC0: TX
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-    GPIO_Init(GPIOC, &GPIO_InitStructure);
+  // PC0: TX
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
 
-    // PC1: RX
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-    GPIO_Init(GPIOC, &GPIO_InitStructure);
+  // PC1: RX
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
 #else
-    // PD5: TX
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-    GPIO_Init(GPIOD, &GPIO_InitStructure);
+  // PD5: TX
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+  GPIO_Init(GPIOD, &GPIO_InitStructure);
 
-    // PD6: RX
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-    GPIO_Init(GPIOD, &GPIO_InitStructure);
+  // PD6: RX
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+  GPIO_Init(GPIOD, &GPIO_InitStructure);
 #endif
 
-    // ボーレート
-    USART_InitStructure.USART_BaudRate = 9600;
-    // 8ビットデータ
-    USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-    // ストップビットは1ビット
-    USART_InitStructure.USART_StopBits = USART_StopBits_1;
-    // パリティなし
-    USART_InitStructure.USART_Parity = USART_Parity_No;
-    // フロー制御は無し
-    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-    // 送信(Tx)と受信(Rx)の両方を有効化
-    USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
+  // ボーレート
+  USART_InitStructure.USART_BaudRate = 9600;
+  // 8ビットデータ
+  USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+  // ストップビットは1ビット
+  USART_InitStructure.USART_StopBits = USART_StopBits_1;
+  // パリティなし
+  USART_InitStructure.USART_Parity = USART_Parity_No;
+  // フロー制御は無し
+  USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+  // 送信(Tx)と受信(Rx)の両方を有効化
+  USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
 
-    USART_Init(USART1, &USART_InitStructure);
-    USART_Cmd(USART1, ENABLE);
+  USART_Init(USART1, &USART_InitStructure);
+  USART_Cmd(USART1, ENABLE);
 
-    Delay_Ms(100);
+  Delay_Ms(100);
 
-    printf("send turn on self calibration\r\n");
+  printf("send turn on self calibration\r\n");
 
-    // セルフキャリブレーションの有効化
-    write_uart(CMD_TURN_ON_SELF_CALIBRATION, sizeof(CMD_TURN_ON_SELF_CALIBRATION));
+  // セルフキャリブレーションの有効化
+  write_uart(CMD_TURN_ON_SELF_CALIBRATION, sizeof(CMD_TURN_ON_SELF_CALIBRATION));
 
-    Delay_Ms(1);
+  Delay_Ms(1);
 
-    // キャリブレーション命令の応答を読み捨てる
-    uint8_t read_buf[9] = {0};
-    uint32_t read_len = read_uart_with_timeout(read_buf, 9);
-    if (read_len < 9)
-    {
-        printf("timeout %d\r\n", read_len);
-    }
+  // キャリブレーション命令の応答を読み捨てる
+  uint8_t read_buf[9] = {0};
+  uint32_t read_len = read_uart_with_timeout(read_buf, 9);
+  if (read_len < 9)
+  {
+    printf("timeout %d\r\n", read_len);
+  }
 
-    printf("start\r\n");
+  printf("start\r\n");
 
-    int count = 0;
+  int count = 0;
 
-    while (1)
-    {
-        loop(count++);
-        Delay_Ms(1000);
-    }
+  while (1)
+  {
+    loop(count++);
+    Delay_Ms(1000);
+  }
 }
 
 void NMI_Handler(void) {}
 void HardFault_Handler(void)
 {
-    while (1)
-    {
-    }
+  while (1)
+  {
+  }
 }

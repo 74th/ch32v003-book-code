@@ -1,7 +1,8 @@
 #define LED C0
 #define BUTTON C1
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
 
   // minichlink -T
@@ -24,14 +25,16 @@ void setup() {
 
 int count = 0;
 
-void loop() {
+void loop()
+{
   printf("loop %d\r\n", count);
   Serial.print("loop ");
   Serial.println(count);
   count++;
 
   bool btn = digitalRead(BUTTON);
-  if(!btn){
+  if (!btn)
+  {
     delay(1000);
     return;
   }

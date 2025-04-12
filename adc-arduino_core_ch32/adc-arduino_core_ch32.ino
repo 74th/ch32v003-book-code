@@ -1,7 +1,8 @@
 #define VRX_PIN PA1
 #define VRY_PIN PA2
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
 
   Serial.println("init");
@@ -13,7 +14,8 @@ void setup() {
 
 uint32_t count = 0;
 
-void loop() {
+void loop()
+{
   Serial.print("loop ");
   Serial.println(count);
 
