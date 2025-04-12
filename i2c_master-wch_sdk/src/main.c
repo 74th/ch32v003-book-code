@@ -8,56 +8,73 @@ void HardFault_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void Delay_Init(void);
 void Delay_Ms(uint32_t n);
 
+// 送信
 void send_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
 {
+    // I2Cのバスがビジーでなくなるまで待つ
     while (I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY) != RESET)
         ;
 
+    // 通信の開始の送信
     I2C_GenerateSTART(I2C1, ENABLE);
 
+    // マスターモードに準備できるまで待つ
     while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT))
         ;
 
+    // スレーブアドレスをマスターからスレーブへの通信として送信
     I2C_Send7bitAddress(I2C1, address << 1, I2C_Direction_Transmitter);
 
+    // トランスミッターモードに準備できるまで待つ
     while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED))
         ;
 
     for (int i = 0; i < length; i++)
     {
-
+        // 1バイトのデータ送信
         I2C_SendData(I2C1, data[i]);
 
+        // 送信完了イベントを待つ
         while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED))
             ;
     }
 
+    // 通信の終了の送信
     I2C_GenerateSTOP(I2C1, ENABLE);
 }
 
+// 受信
 void read_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
 {
+    // I2Cのバスがビジーでなくなるまで待つ
     while (I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY) != RESET)
         ;
 
+    // 通信の開始の送信
     I2C_GenerateSTART(I2C1, ENABLE);
 
+    // マスターモードに準備できるまで待つ
     while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT))
         ;
 
+    // スレーブアドレスをマスターからスレーブへの通信として送信
     I2C_Send7bitAddress(I2C1, address << 1, I2C_Direction_Receiver);
 
+    // マスターモードに準備できるまで待つ
     while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED))
         ;
 
     for (int i = 0; i < length; i++)
     {
-        data[i] = I2C_ReceiveData(I2C1);
-
+        // 受信完了イベントを待つ
         while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_RECEIVED))
             ;
+
+        // 受信データの受信
+        data[i] = I2C_ReceiveData(I2C1);
     }
 
+    // 通信の終了の送信
     I2C_GenerateSTOP(I2C1, ENABLE);
 }
 
@@ -91,15 +108,21 @@ int main(void)
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOC, &GPIO_InitStructure);
 
-    // I2C1 Init
+    // I2C1の設定
+    // クロック速度
     I2C_InitTSturcture.I2C_ClockSpeed = 100000;
+    // モード（固定値）
     I2C_InitTSturcture.I2C_Mode = I2C_Mode_I2C;
+    // デューティサイクル
     I2C_InitTSturcture.I2C_DutyCycle = I2C_DutyCycle_2;
-    I2C_InitTSturcture.I2C_OwnAddress1 = SHT31_I2C_ADDR;
+    // Ackを有効にする
     I2C_InitTSturcture.I2C_Ack = I2C_Ack_Enable;
+    // Ackアドレスのビット数
     I2C_InitTSturcture.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
+    // 設定の有効化
     I2C_Init(I2C1, &I2C_InitTSturcture);
 
+    // I2Cの有効化
     I2C_Cmd(I2C1, ENABLE);
     I2C_AcknowledgeConfig(I2C1, ENABLE);
 
