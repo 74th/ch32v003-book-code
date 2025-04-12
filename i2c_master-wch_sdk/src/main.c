@@ -3,6 +3,8 @@
 
 #define SHT31_I2C_ADDR 0x44
 
+#define USE_REMAP 0
+
 void NMI_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void HardFault_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void Delay_Init(void);
@@ -99,14 +101,29 @@ int main(void)
     GPIO_InitTypeDef GPIO_InitStructure = {0};
     I2C_InitTypeDef I2C_InitTSturcture = {0};
 
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC | RCC_APB2Periph_AFIO, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
+#if USE_REMAP
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+#endif
 
+#if USE_REMAP
+    // I2Cのリマップ
+    // GPIO_PartialRemap_I2C1
+    // GPIO_FullRemap_I2C1
+    GPIO_PinRemapConfig(GPIO_FullRemap_I2C1, ENABLE);
+    // PC6: SDA, PC5: SCL
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_5;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOC, &GPIO_InitStructure);
+#else
     // PC1: SDA, PC2: SCL
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOC, &GPIO_InitStructure);
+#endif
 
     // I2C1の設定
     // クロック速度
