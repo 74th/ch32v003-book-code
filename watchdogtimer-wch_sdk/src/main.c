@@ -47,8 +47,10 @@ int main(void)
   // LSIは128kHzにつき、128分周でミリ秒になる
   IWDG_SetPrescaler(IWDG_Prescaler_128);
   // 2,000ms = 2s でリセット
-  IWDG_SetReload(2000);
+  IWDGSetReload(2000);
+  // 最初のカウンタリセット
   IWDG_ReloadCounter();
+  // IDWGを有効化
   IWDG_Enable();
 
   int count = 0;
