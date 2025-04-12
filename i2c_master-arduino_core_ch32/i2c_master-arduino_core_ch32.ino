@@ -58,7 +58,6 @@ void loop()
   {
     dac[i] = Wire.read();
   }
-  Wire.endTransmission();
 
   t = (dac[0] << 8) | dac[1];                       // 1Byte目のデータを8bit左にシフト、OR演算子で2Byte目のデータを結合して、tに代入
   temperature = (((uint32_t)(t) * 175) >> 16) - 45; // 温度の計算、temperatureに代入
