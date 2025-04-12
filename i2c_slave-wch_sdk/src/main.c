@@ -120,9 +120,7 @@ int main(void)
   NVIC_Init(&NVIC_InitStructure);
 
   // I2Cの設定
-  I2C_InitTSturcture.I2C_ClockSpeed = 2000000;
   I2C_InitTSturcture.I2C_Mode = I2C_Mode_I2C;
-  I2C_InitTSturcture.I2C_DutyCycle = I2C_DutyCycle_2;
   // I2Cスレーブアドレスを指定
   I2C_InitTSturcture.I2C_OwnAddress1 = I2C_ADDRESS << 1;
   I2C_InitTSturcture.I2C_Ack = I2C_Ack_Enable;
