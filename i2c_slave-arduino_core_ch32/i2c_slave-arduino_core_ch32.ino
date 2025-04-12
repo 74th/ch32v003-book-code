@@ -9,11 +9,14 @@ uint8_t on_request_available = 0;
 uint8_t on_receive_available = 0;
 uint8_t on_receive_length = 0;
 
+// マスターからスレーブへの受信
 void on_receive(int length) {
   for (int i = 0; i < length; i++) {
     if (i == 0) {
+      // 最初のバイトはレジスタアドレスとする
       position = Wire.read();
     } else {
+      // 2バイト目以降はレジスタの値とする
       if (position + (i - 1) < sizeof(i2c_registers)) {
         i2c_registers[position + (i - 1)] = Wire.read();
       } else {
