@@ -1,9 +1,10 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-#define USING_16BIT 0  // 16bitモードの場合は1にするが、動作しなかった
+#define USING_16BIT 0 // 16bitモードの場合は1にするが、動作しなかった
 
-void reset_adt1730() {
+void reset_adt7310()
+{
   Serial.println("software reset");
 
   SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
@@ -24,17 +25,19 @@ void reset_adt1730() {
   delay(500);
 }
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
 
   Serial.println("init");
 
   delay(3000);
 
-  reset_adt1730();
+  reset_adt7310();
 }
 
-void loop() {
+void loop()
+{
   Serial.println("loop");
   uint16_t raw;
   int32_t raw_int;
@@ -46,8 +49,9 @@ void loop() {
 
   SPI.endTransaction();
 
-  if (raw == 0x0000 || raw == 0xffff) {
-    reset_adt1730();
+  if (raw == 0x0000 || raw == 0xffff)
+  {
+    reset_adt7310();
     return;
   }
 
@@ -56,9 +60,12 @@ void loop() {
   // 13bit
   raw = raw >> 3;
 
-  if (raw & 0x1000) {
+  if (raw & 0x1000)
+  {
     raw_int = raw - 0x2000;
-  } else {
+  }
+  else
+  {
     raw_int = raw;
   }
 
