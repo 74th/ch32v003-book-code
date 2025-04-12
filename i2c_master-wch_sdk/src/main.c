@@ -1,9 +1,11 @@
 #include <ch32v00x.h>
 #include <debug.h>
 
+#define TIMEOUT_MAX 100000
+
 #define SHT31_I2C_ADDR 0x44
 
-#define USE_REMAP 0
+#define USE_REMAP 1
 
 void NMI_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void HardFault_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
@@ -13,23 +15,41 @@ void Delay_Ms(uint32_t n);
 // 送信
 void send_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
 {
+    int32_t timeout;
+
     // I2Cのバスがビジーでなくなるまで待つ
-    while (I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY) != RESET)
+    timeout = TIMEOUT_MAX;
+    while (timeout-- && I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY) != RESET)
         ;
+
+    if (timeout < 0)
+    {
+        return;
+    }
 
     // 通信の開始の送信
     I2C_GenerateSTART(I2C1, ENABLE);
 
     // マスターモードに準備できるまで待つ
-    while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT))
+    timeout = TIMEOUT_MAX;
+    while (timeout-- && !I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT))
         ;
+    if (timeout < 0)
+    {
+        return;
+    }
 
     // スレーブアドレスをマスターからスレーブへの通信として送信
     I2C_Send7bitAddress(I2C1, address << 1, I2C_Direction_Transmitter);
 
     // トランスミッターモードに準備できるまで待つ
-    while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED))
+    timeout = TIMEOUT_MAX;
+    while (timeout-- && !I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED))
         ;
+    if (timeout < 0)
+    {
+        return;
+    }
 
     for (int i = 0; i < length; i++)
     {
@@ -37,8 +57,13 @@ void send_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
         I2C_SendData(I2C1, data[i]);
 
         // 送信完了イベントを待つ
-        while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED))
+        timeout = TIMEOUT_MAX;
+        while (timeout-- && !I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED))
             ;
+        if (timeout < 0)
+        {
+            return;
+        }
     }
 
     // 通信の終了の送信
@@ -48,28 +73,34 @@ void send_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
 // 受信
 void read_i2c_data(uint8_t address, uint8_t *data, uint8_t length)
 {
+    int32_t timeout;
+
     // I2Cのバスがビジーでなくなるまで待つ
-    while (I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY) != RESET)
+    timeout = TIMEOUT_MAX;
+    while (timeout-- && I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY) != RESET)
         ;
 
     // 通信の開始の送信
     I2C_GenerateSTART(I2C1, ENABLE);
 
     // マスターモードに準備できるまで待つ
-    while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT))
+    timeout = TIMEOUT_MAX;
+    while (timeout-- && !I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT))
         ;
 
     // スレーブアドレスをマスターからスレーブへの通信として送信
     I2C_Send7bitAddress(I2C1, address << 1, I2C_Direction_Receiver);
 
     // マスターモードに準備できるまで待つ
-    while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED))
+    timeout = TIMEOUT_MAX;
+    while (timeout-- && !I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED))
         ;
 
     for (int i = 0; i < length; i++)
     {
         // 受信完了イベントを待つ
-        while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_RECEIVED))
+        timeout = TIMEOUT_MAX;
+        while (timeout-- && !I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_RECEIVED))
             ;
 
         // 受信データの受信
