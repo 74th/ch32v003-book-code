@@ -21,35 +21,35 @@ uint32_t data[LED_NUM];
 // 色の指定を返すコールバック
 uint32_t WS2812BLEDCallback(int ledno)
 {
-	return data[ledno];
+  return data[ledno];
 }
 
 int main()
 {
-	int k;
-	SystemInit();
+  int k;
+  SystemInit();
 
-	// SPI DMAを利用するため、MOSI PC6で出力される
-	WS2812BDMAInit();
+  // SPI DMAを利用するため、MOSI PC6で出力される
+  WS2812BDMAInit();
 
-	uint32_t count = 0;
+  uint32_t count = 0;
 
-	while (1)
-	{
-		// 転送終了まで待つ
-		while (WS2812BLEDInUse)
-			;
+  while (1)
+  {
+    // 転送終了まで待つ
+    while (WS2812BLEDInUse)
+      ;
 
-		for (int i = 0; i < LED_NUM; i++)
-		{
-			// HSVカラー指定
-			data[i] = EHSVtoHEX((count + i) * 16 & 0xff, 255, 3);
-		}
+    for (int i = 0; i < LED_NUM; i++)
+    {
+      // HSVカラー指定
+      data[i] = EHSVtoHEX((count + i) * 16 & 0xff, 255, 3);
+    }
 
-		// 転送開始
-		WS2812BDMAStart(LED_NUM);
+    // 転送開始
+    WS2812BDMAStart(LED_NUM);
 
-		count++;
-		Delay_Ms(100);
-	}
+    count++;
+    Delay_Ms(100);
+  }
 }
