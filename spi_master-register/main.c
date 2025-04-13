@@ -40,6 +40,7 @@ void init_spi_master()
       SPI_CPOL_Low | SPI_CPHA_1Edge |
       // NSSの制御モード
       SPI_NSS_Hard |
+      // マスターモード
       SPI_Mode_Master;
 
   // SPIの開始
@@ -59,9 +60,9 @@ void spi_end()
 
 uint8_t spi_transfer(uint8_t data)
 {
+  SPI1->DATAR = data;
   while (!(SPI1->STATR & SPI_STATR_TXE))
     ;
-  SPI1->DATAR = data;
 
   while (!(SPI1->STATR & SPI_STATR_RXNE))
     ;
