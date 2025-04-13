@@ -26,26 +26,19 @@ int main()
   GPIOC->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 1);
 
   // EXTI
-  EXTI->INTENR &= ~EXTI_Line9;
-  EXTI->EVENR &= ~EXTI_Line9;
-  EXTI->RTENR &= ~EXTI_Line9;
-  EXTI->FTENR &= ~EXTI_Line9;
   EXTI->EVENR |= EXTI_Line9;
   EXTI->FTENR |= EXTI_Line9;
 
+  // LSIクロックの安定待ち
   while (!(RCC->RSTSCKR & (1 << 1)))
     ;
 
-  // PWR_AWU_SetPrescaler(PWR_AWU_Prescaler_10240);
-  uint32_t tmp = PWR->AWUPSC & AWUPSC_MASK;
-  tmp |= PWR_AWU_Prescaler_10240;
-  PWR->AWUPSC = tmp;
-  // PWR_AWU_SetWindowValue(25);
-  tmp = 0;
-  tmp = PWR->AWUWR & AWUWR_MASK;
-  tmp |= 25;
-  PWR->AWUWR = tmp;
-  // PWR_AutoWakeUpCmd(ENABLE);
+  // AWUの設定
+  // プリスケーラ
+  PWR->AWUPSC = PWR_AWU_Prescaler_10240;
+  // カウンタ
+  PWR->AWUWR = 25;
+  // AWUの有効化
   PWR->AWUCSR |= (1 << 1);
 
   printf("start\r\n");
@@ -56,15 +49,21 @@ int main()
   {
     printf("go to stanby %ld\r\n\r\n", count);
 
-    // PWR_EnterSTANDBYMode(PWR_STANDBYEntry_WFE);
+    // スタンバイモード
     PWR->CTLR &= CTLR_DS_MASK;
     PWR->CTLR |= PWR_CTLR_PDDS;
 
-    NVIC->SCTLR |= (1 << 2);
+    NVIC->SCTLR |=
+        // WFIでディープスリープモードへ
+        (1 << 2) |
+        // WFEとして動作
+        (1 << 3);
 
-    __WFE();
+    // __WFE();
+    __ASM volatile("wfi");
 
-    NVIC->SCTLR &= ~(1 << 2);
+    // 設定の解除
+    NVIC->SCTLR &= ~((1 << 2) | (1 << 3));
 
     printf("awake %ld\r\n", count);
 
