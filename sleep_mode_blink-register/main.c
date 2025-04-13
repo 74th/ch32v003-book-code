@@ -66,8 +66,13 @@ int main()
   // C0=L
   GPIOC->BSHR = (1 << (16 + 1));
 
-  PFIC->SCTLR &= ~(1 << 2);   // Sleep
-  PWR->CTLR &= PWR_CTLR_PDDS; // Sleep Mode
+  // 初期状態で有効なため、本来は不要
+  // スリープモード
+  PFIC->SCTLR &= ~(1 << 2);
+  // WFI命令をWFI（Wait For Interrupt）にする
+  PFIC->SCTLR &= ~(1 << 3);
+  // スリープモード
+  PWR->CTLR &= ~PWR_CTLR_PDDS;
 
   Delay_Ms(100);
 
@@ -95,9 +100,10 @@ int main()
 
     printf("go to sleep %ld\r\n", count);
 
-    // __WFI();
-    NVIC->SCTLR &= ~(1 << 3);
+    // 割込待ち
     __ASM volatile("wfi");
+    // ch32funではこの命令も使える
+    // __WFI();
 
     count++;
   }
