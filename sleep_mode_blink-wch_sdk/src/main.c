@@ -7,7 +7,7 @@
 
 #define MODE_USE_SLEEP 1
 #define MODE_NOUSE_SLEEP 0
-#define MODE MODE_NOUSE_SLEEP
+#define MODE MODE_USE_SLEEP
 
 void NMI_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void HardFault_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
@@ -56,43 +56,6 @@ void TIM1_INT_Init(uint16_t arr, uint16_t psc)
   TIM_ITConfig(TIM1, TIM_IT_Update, ENABLE);
 }
 
-void TIM2_INT_Init(uint16_t arr, uint16_t psc)
-{
-  // 汎用タイマー TIM2
-
-  NVIC_InitTypeDef NVIC_InitStructure = {0};
-  TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure = {0};
-
-  // クロックを有効化する
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
-
-  // カウントするクロックの周期
-  // クロックが 48MHz のため、48,000-1 を設定しておけば
-  // 1kHz(1ms) でカウントすることになる
-  TIM_TimeBaseInitStructure.TIM_Prescaler = psc;
-
-  // カウンターをリセットする周期
-  // 1000-1 をセットすれば、上と併せて、1Hz(1s) でリセットされる
-  TIM_TimeBaseInitStructure.TIM_Period = arr;
-  // TIM2 には RepetitionCounter はない
-
-  TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
-  TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
-  TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStructure);
-
-  // 割り込みフラグのクリア
-  TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
-
-  // 割り込みの設定
-  NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&NVIC_InitStructure);
-
-  TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
-}
-
 uint8_t ledState = 0;
 
 void TIM1_UP_IRQHandler(void)
@@ -138,8 +101,8 @@ int main(void)
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_Init(BLINKY_GPIO_PORT, &GPIO_InitStructure);
 
-  PFIC->SCTLR &= ~(1 << 2);   // Sleep
-  PWR->CTLR &= PWR_CTLR_PDDS; // Sleep Mode
+  // スリープモードはデフォルトで有効になっている
+  // 特に設定の必要はない
 
   GPIO_WriteBit(BLINKY_GPIO_PORT, BLINKY_GPIO_PIN, 0);
 
@@ -161,6 +124,10 @@ int main(void)
 #endif
     GPIO_WriteBit(BLINKY_GPIO_PORT, BLINKY_GPIO_PIN, ledState);
     ledState ^= 1;
+
+#if ENABLE_UART_PRINT == 1
+    printf("sleep\r\n");
+#endif
 
     // 割り込み待ち命令を実行すると、sleepに入る
     __WFI();
