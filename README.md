@@ -18,7 +18,7 @@ MCUは多くの機能を持っており、MCUの機能としての解説と、Ar
 とっつきにくいCH32V003にふれるファーストステップとしてArduinoを活用してもらいたく、Arduinoに絞った内容を無料で公開することにしました。
 本ページをきっかけに、CH32V003に興味を持っていただければ幸いです。
 
-> はじめに - CH32V003開発ガイドブック-Arduino抜粋版-<br/>https://ch32v003-guidebook-arduino.74th.tech/
+> CH32V003開発ガイドブック-Arduino抜粋版-<br/>https://ch32v003-guidebook-arduino.74th.tech/
 
 ## LICENSE
 
