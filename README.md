@@ -12,6 +12,14 @@ MCUは多くの機能を持っており、MCUの機能としての解説と、Ar
 
 > CH32V003開発ガイドブック[74TH-B018] - 74th Books & Gadgets - BOOTH<br/>[https://74th.booth.pm/items/6934072](https://74th.booth.pm/items/6934072)
 
+## Arduino抜粋版について
+
+技術同人誌『CH32V003開発ガイドブック』の中から、Arduinoについて抜粋し、さらにArduinoの利用に便利なように追記したもを無料で公開しています。
+とっつきにくいCH32V003にふれるファーストステップとしてArduinoを活用してもらいたく、Arduinoに絞った内容を無料で公開することにしました。
+本ページをきっかけに、CH32V003に興味を持っていただければ幸いです。
+
+> はじめに - CH32V003開発ガイドブック-Arduino抜粋版-<br/>https://ch32v003-guidebook-arduino.74th.tech/
+
 ## LICENSE
 
 CC0 1.0 Universal
