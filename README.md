@@ -10,6 +10,8 @@
 CH32V003の基礎知識から、簡単に扱えるArduinoから、全ての機能を使い尽くせる公式SDK、ch32funでの開発方法を解説します。
 MCUは多くの機能を持っており、MCUの機能としての解説と、Arduino、公式SDK、ch32fun、レジスタ操作での実装方法を解説します。
 
+> CH32V003開発ガイドブック — スイッチサイエンス<br/>[https://www.switch-science.com/products/10547](https://www.switch-science.com/products/10547)
+
 > CH32V003開発ガイドブック[74TH-B018] - 74th Books & Gadgets - BOOTH<br/>[https://74th.booth.pm/items/6934072](https://74th.booth.pm/items/6934072)
 
 ## Arduino抜粋版について
