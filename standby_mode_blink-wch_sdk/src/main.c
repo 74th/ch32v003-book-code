@@ -80,8 +80,7 @@ int main(void)
 #endif
 
     PWR_EnterSTANDBYMode(PWR_STANDBYEntry_WFE);
-
-    USART_Printf_Init(115200);
+    SystemInit();
 
 #if ENABLE_UART_PRINT
     printf("\r\nAuto wake up: %d \r\n", count);

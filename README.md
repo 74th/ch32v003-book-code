@@ -2,6 +2,8 @@
 
 本リポジトリは同人誌『CH32V003ガイドブック』のサンプルコードです。
 
+書籍中の正誤表、追記事項を[./book-errata.md](./book-errata.md)に掲載しています。
+
 ## 書籍について
 
 <img src="./docs/ebook.png" alt="CH32V003開発ガイドブック" width="300">

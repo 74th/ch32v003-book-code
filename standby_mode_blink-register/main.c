@@ -61,6 +61,9 @@ int main()
 
     // __WFE();
     __ASM volatile("wfi");
+    // 復帰後はクロック等がリセットされるため、
+    // SystemInit()を呼び出して初期化する必要がある
+    SystemInit();
 
     // 設定の解除
     NVIC->SCTLR &= ~((1 << 2) | (1 << 3));
