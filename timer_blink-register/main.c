@@ -36,7 +36,7 @@ void TIM1_INT_Init(uint16_t arr, uint16_t psc)
 	// PreemptionPriority = 0, SubPriority = 1
 	NVIC->IPRIOR[TIM1_UP_IRQn] = 0 << 7 | 1 << 6;
 	// 有効化
-	NVIC->IENR[((uint32_t)(TIM1_UP_IRQn) >> 5)] != (1 << ((uint32_t)(TIM1_UP_IRQn) & 0x1F));
+	NVIC->IENR[((uint32_t)(TIM1_UP_IRQn) >> 5)] |= (1 << ((uint32_t)(TIM1_UP_IRQn) & 0x1F));
 	printf("NVIC->IPRIOR[TIM1_UP_IRQn]: %x\r\n", NVIC->IPRIOR[(uint32_t)(TIM1_UP_IRQn)]);
 	printf("NVIC->IENR[TIM1_UP_IRQn]:%x\r\n", NVIC->IENR[(uint32_t)(TIM1_UP_IRQn)]);
 	// NVIC->IPRIOR[TIM1_UP_IRQn]: 40
@@ -60,7 +60,6 @@ void TIM1_UP_IRQHandler(void)
 
 	// フラグのクリア
 	TIM1->INTFR &= (uint16_t)~TIM_IT_Update;
-	TIM1->DMAINTENR &= (uint16_t)~TIM_IT_Update;
 
 	if (ledState)
 	{
@@ -81,11 +80,11 @@ int main()
 	RCC->APB2PCENR |= RCC_APB2Periph_GPIOD | RCC_APB2Periph_GPIOC | RCC_APB2Periph_TIM1;
 	RCC->APB1PCENR |= RCC_APB1Periph_TIM2;
 
-	// GPIO C0 Push-Pull
+	// GPIO C1 Push-Pull
 	GPIOC->CFGLR &= ~(0xf << (4 * 1));
 	GPIOC->CFGLR |= (GPIO_Speed_10MHz | GPIO_CNF_OUT_PP) << (4 * 1);
 
-	// C0=L
+	// C1=L
 	GPIOC->BSHR = (1 << (16 + 1));
 
 	Delay_Ms(100);
