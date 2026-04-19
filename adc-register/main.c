@@ -5,6 +5,10 @@
 #define VRX_PIN GPIOv_from_PORT_PIN(GPIO_port_A, 1)
 #define VRY_PIN GPIOv_from_PORT_PIN(GPIO_port_A, 2)
 
+// ADCへの切り替え時にADCの高い入力インピーダンスを打ち消すためのディレイ
+// https://github.com/cnlohr/ch32fun/blob/cfffff6d6bd9bd97d7348d044a1de145f4548072/extralibs/ch32v003_GPIO_branchless.h#L54
+#define GPIO_ADC_MUX_DELAY 200
+
 uint32_t count;
 
 int main()
@@ -50,9 +54,12 @@ int main()
   {
     printf("loop %d\r\n", count++);
 
+    // CH1、CH0の連続変換を利用せず、
+    // CH1で設定、変換し、その後再設定してCH0で設定、変換する
+
     // 1番目の変換に、CH1を選択
     ADC1->RSQR3 = ADC_Channel_1 << (5 * 0);
-    // 1番目の変換の、サンプルレート
+    // CH1のサンプルレート
     ADC1->SAMPTR2 = ADC_SampleTime_241Cycles << (3 * 1);
 
     Delay_Us(GPIO_ADC_MUX_DELAY);
@@ -63,7 +70,9 @@ int main()
     uint16_t x = ADC1->RDATAR;
 
     // 1番目の変換に、CH0を選択
-    ADC1->RSQR3 = ADC_Channel_0;
+    ADC1->RSQR3 = ADC_Channel_0 << (5 * 0);
+    // CH0のサンプルレート
+    ADC1->SAMPTR2 = ADC_SampleTime_241Cycles << (3 * 0);
 
     Delay_Us(GPIO_ADC_MUX_DELAY);
     // 変換をトリガ
